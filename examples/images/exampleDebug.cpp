@@ -48,7 +48,7 @@ int main( int /*argc*/, char** /*argv*/ )
     subSampler3D.getSubSampledDomain(), 
     subSampler3D, 
     df);
-  GenericWriter<ConstImageAdapterForSubSampling3D>::exportFile("", subsampledImage3D );
+  // GenericWriter<ConstImageAdapterForSubSampling3D>::exportFile("", subsampledImage3D );
   return 0;
 }
 //                                                                           //
