@@ -104,11 +104,14 @@ int main( int /*argc*/, char** /*argv*/ )
   using Expected   = typename ConstRange::ConstReverseIterator;
   
   auto r  = subsampledImage3D.constRange();
-  auto rr = r.rbegin(Z3i::Point{});
+  // auto rr = r.rbegin(Z3i::Point{});
   
+  Z3i::Domain::ConstIterator it({}, {}, {});
+  std::reverse_iterator<Z3i::Domain::ConstIterator> ri(it);
   // f(r);
   // f(rr);
-  static_assert(std::is_same_v<Expected, decltype(rr)>);
+  f(ri);
+  // static_assert(std::is_same_v<Expected, decltype(rr)>);
   
   return 0;
 }
