@@ -3,11 +3,6 @@ name: CI (linux/macOS/windows), master
 on:
   push:
     branches: [ MacDebug ]
-
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  CONFIG_GLOBAL:  -DBUILD_EXAMPLES=true -DBUILD_TESTING=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DWITH_EIGEN=true 
-  CONFIG_MAC:     -DWITH_GMP=true -DBUILD_POLYSCOPE_EXAMPLES=true -DWITH_CGAL=true -DWITH_LIBIGL=true 
   
 jobs:
   build:
@@ -16,7 +11,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [macOS-latest]
-        BUILD_TYPE: [Debug,Release]
+        BUILD_TYPE: [Debug]
 
     steps:
      - uses: actions/checkout@v3
@@ -34,7 +29,7 @@ jobs:
        if: matrix.os == 'macOS-latest'
        shell: bash
        working-directory: ${{runner.workspace}}/build
-       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE }}  $CONFIG_GLOBAL $CONFIG_MAC -DDGTAL_RANDOMIZED_TESTING_WHITELIST="${{ steps.whitelist.outputs.WHITELIST }}"
+       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=Debug -DDGTAL_BUILD_EXAMPLES=true -DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=100 -DDGTAL_WITH_GMP=true -DDGTAL_BUILD_POLYSCOPE_EXAMPLES=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true
 
      - name: Build
        working-directory: ${{runner.workspace}}/build
