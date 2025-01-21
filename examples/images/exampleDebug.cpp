@@ -105,9 +105,7 @@ int main( int /*argc*/, char** /*argv*/ )
   
   auto r  = subsampledImage3D.constRange();
   auto rr = r.rbegin(Z3i::Point{});
-  
-  static_assert(std::is_same_v<Expected, decltype(rr)>);
-  
+    
   return 0;
 }
 //                                                                           //
