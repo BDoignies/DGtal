@@ -16,12 +16,37 @@
 namespace DGtal { namespace concepts {
 namespace Override
 {
+    template <typename T>
+    struct CConstBidirectionalRangeFromPoint2 // : CConstBidirectionalRange<T>
+    {
+      // ----------------------- Concept checks ------------------------------
+    public:
+      typedef typename T::Point Point;
+      BOOST_CONCEPT_USAGE( CConstBidirectionalRangeFromPoint )
+      {
+        checkConstConstraints();
+      }
+      void checkConstConstraints() const
+      {
+        concepts::ConceptUtils::sameType( myB, myX.rbegin( myPoint ) );
+      }
+      // ------------------------- Private Datas --------------------------------
+    private:
+      T myX;
+      Point myPoint;
+      typename T::ConstReverseIterator myB;
+
+      // ------------------------- Internals ------------------------------------
+    private:
+
+    };
+
     template <typename I>
     struct CConstImage 
     {
     public:
       typedef typename I::ConstRange ConstRange;
-      BOOST_CONCEPT_ASSERT((CConstBidirectionalRangeFromPoint<ConstRange>)); 
+      BOOST_CONCEPT_ASSERT((CConstBidirectionalRangeFromPoint2<ConstRange>)); 
     private:
     };
 } } }
