@@ -16,88 +16,18 @@
 namespace DGtal { namespace concepts {
 namespace Override
 {
-    template <typename X, typename A, typename R>
-    struct CUnaryFunctor: boost::Assignable<X>
-    {
-
-      // ----------------------- Concept checks ------------------------------
-    public:
-
-      BOOST_CONCEPT_USAGE( CUnaryFunctor )
-      {
-        // x( a ) returns r.
-        ConceptUtils::sameType( r, x.operator() ( a ) );
-      }
-      // ------------------------- Private Datas --------------------------------
-    private:
-      X x;
-      A a;
-      R r;
-      // ------------------------- Internals ------------------------------------
-    private:
-
-    }; // end of concept CUnaryFunctor
-
-   
-    template <typename T>
-    struct CPointFunctor : CUnaryFunctor<T, typename T::Point, typename T::Value>
-    {
-      // ----------------------- Concept checks ------------------------------
-    public:
-      typedef typename T::Point Point;
-      typedef typename T::Value Value;
-
-      // ------------------------- Private Datas --------------------------------
-    private:
-      // ------------------------- Internals ------------------------------------
-    private:
-
-    }; 
-
     template <typename I>
-    struct CTrivialConstImage // : CPointFunctor<I> Ok ? 
+    struct CConstImage 
     {
-
     public:
-
-      // BOOST_CONCEPT_ASSERT((CLabel<typename I::Value>));
-      //Inner types
-      // typedef typename I::Domain Domain;
-      // BOOST_CONCEPT_ASSERT((concepts::CDomain<Domain>));
-
-
-      BOOST_CONCEPT_USAGE(CTrivialConstImage)
-      {
-        // ConceptUtils::sameType(i.domain(), d);
-      }
-
-    private:
-      I i;
-      I::Domain d;
-
-    };
-
-    template <typename I>
-    struct CConstImage  // : CTrivialConstImage<I>
-    {
-
-    public:
-      typedef typename I::Domain Domain;
-      BOOST_CONCEPT_ASSERT((concepts::CDomain<Domain>)); // Ok
-
-      typedef typename I::ConstRange ConstRange;
-      BOOST_CONCEPT_ASSERT((CConstBidirectionalRangeFromPoint<ConstRange>)); // Ok
-
       BOOST_CONCEPT_USAGE(CConstImage)
       {
-        ConceptUtils::sameType(i.domain(), d);
-        // ConceptUtils::sameType(i.constRange(), r);
+        ConceptUtils::sameType(i.constRange(), r);
       }
 
     private:
       I i;
-      Domain d;
-      ConstRange r;
+      I::ConstRange r;
     };
 } } }
 
