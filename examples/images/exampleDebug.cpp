@@ -78,7 +78,7 @@ namespace Override
     };
 
     template <typename I>
-    struct CConstImage  : CTrivialConstImage<I>
+    struct CConstImage  // : CTrivialConstImage<I>
     {
 
     public:
