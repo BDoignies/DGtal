@@ -20,19 +20,9 @@ namespace Override
     struct CConstImage 
     {
     public:
-      typedef typename I::Domain Domain;
       typedef typename I::ConstRange ConstRange;
-     
-      BOOST_CONCEPT_USAGE(CConstImage)
-      {
-        ConceptUtils::sameType(i.domain(), d);
-        ConceptUtils::sameType(i.constRange(), r);
-      }
-
+      BOOST_CONCEPT_ASSERT((CConstBidirectionalRangeFromPoint<ConstRange>)); 
     private:
-      I i;
-      Domain d;
-      ConstRange r;
     };
 } } }
 
