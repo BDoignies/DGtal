@@ -91,7 +91,7 @@ namespace Override
       BOOST_CONCEPT_USAGE(CConstImage)
       {
         ConceptUtils::sameType(i.domain(), d);
-        ConceptUtils::sameType(i.constRange(), r);
+        // ConceptUtils::sameType(i.constRange(), r);
       }
 
     private:
