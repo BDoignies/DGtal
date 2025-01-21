@@ -1,0 +1,43 @@
+name: CI (linux/macOS/windows), master
+
+on:
+  push:
+    branches: [ MacDebug ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  CONFIG_GLOBAL:  -DBUILD_EXAMPLES=true -DBUILD_TESTING=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DWITH_EIGEN=true 
+  CONFIG_MAC:     -DWITH_GMP=true -DBUILD_POLYSCOPE_EXAMPLES=true -DWITH_CGAL=true -DWITH_LIBIGL=true 
+  
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [macOS-latest]
+        BUILD_TYPE: [Debug,Release]
+
+    steps:
+     - uses: actions/checkout@v3
+       with:
+          fetch-depth: 10
+
+     - name: Install macOS deps
+       if: matrix.os == 'macOS-latest'
+       run: brew install boost ninja gmp libomp cgal
+
+     - name: Create Build Environment
+       run: cmake -E make_directory ${{runner.workspace}}/build
+
+     - name: Configure CMake (macOS)
+       if: matrix.os == 'macOS-latest'
+       shell: bash
+       working-directory: ${{runner.workspace}}/build
+       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE }}  $CONFIG_GLOBAL $CONFIG_MAC -DDGTAL_RANDOMIZED_TESTING_WHITELIST="${{ steps.whitelist.outputs.WHITELIST }}"
+
+     - name: Build
+       working-directory: ${{runner.workspace}}/build
+       shell: bash
+       # Execute the build.  You can specify a specific target with "--target <NAME>"
+       run: cmake --build . --config ${{ matrix.BUILD_TYPE }} --target imageBasicSubsampling
