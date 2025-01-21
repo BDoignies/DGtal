@@ -17,12 +17,12 @@ namespace DGtal { namespace concepts {
 namespace Override
 {
     template <typename T>
-    struct CConstBidirectionalRangeFromPoint2 // : CConstBidirectionalRange<T>
+    struct CConstBidirectionalRangeFromPoint2// : CConstBidirectionalRange<T>
     {
       // ----------------------- Concept checks ------------------------------
     public:
       typedef typename T::Point Point;
-      BOOST_CONCEPT_USAGE( CConstBidirectionalRangeFromPoint )
+      BOOST_CONCEPT_USAGE( CConstBidirectionalRangeFromPoint2 )
       {
         checkConstConstraints();
       }
@@ -49,6 +49,7 @@ namespace Override
       BOOST_CONCEPT_ASSERT((CConstBidirectionalRangeFromPoint2<ConstRange>)); 
     private:
     };
+
 } } }
 
 template <typename TContainer,
