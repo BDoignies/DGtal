@@ -55,12 +55,12 @@ namespace Override
     }; 
 
     template <typename I>
-    struct CTrivialConstImage // : CPointFunctor<I>
+    struct CTrivialConstImage // : CPointFunctor<I> Ok ? 
     {
 
     public:
 
-      BOOST_CONCEPT_ASSERT((CLabel<typename I::Value>));
+      // BOOST_CONCEPT_ASSERT((CLabel<typename I::Value>));
       //Inner types
       typedef typename I::Domain Domain;
       BOOST_CONCEPT_ASSERT((concepts::CDomain<Domain>));
