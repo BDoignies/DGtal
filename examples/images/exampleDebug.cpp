@@ -62,13 +62,13 @@ namespace Override
 
       // BOOST_CONCEPT_ASSERT((CLabel<typename I::Value>));
       //Inner types
-      typedef typename I::Domain Domain;
-      BOOST_CONCEPT_ASSERT((concepts::CDomain<Domain>));
+      // typedef typename I::Domain Domain;
+      // BOOST_CONCEPT_ASSERT((concepts::CDomain<Domain>));
 
 
       BOOST_CONCEPT_USAGE(CTrivialConstImage)
       {
-        ConceptUtils::sameType(i.domain(), d);
+        // ConceptUtils::sameType(i.domain(), d);
       }
 
     private:
