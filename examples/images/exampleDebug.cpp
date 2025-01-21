@@ -104,7 +104,7 @@ int main( int /*argc*/, char** /*argv*/ )
   using Expected   = typename ConstRange::ConstReverseIterator;
   
   auto r  = subsampledImage3D.constRange();
-  auto rr = r.rbegin(Z3i::Point{});
+  // auto rr = r.rbegin(Z3i::Point{});
     
   return 0;
 }
