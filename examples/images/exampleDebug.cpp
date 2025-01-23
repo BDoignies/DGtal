@@ -26,14 +26,17 @@ int main( int /*argc*/, char** /*argv*/ )
                             Image2D::Value,
                             functors::Identity > ConstImageAdapterForSubSampling;
 
-  ConstImageAdapterForSubSampling* aa;
-  ConstImageAdapterForSubSampling::ConstRange r(aa);
-  auto rr = r.rbegin();
-  f(r);
-  f(rr);
-  // Z3i::Domain::ConstIterator it({}, {}, {});
-  // std::reverse_iterator<Z3i::Domain::ConstIterator> ri(it);
+  // ConstRange        = DefaultConstImageRange<ConstImageAdapterForSubSampling> ConstRange;
+  // ConsrRange.rbegin -> ConstReverseIterator
   
+  // ConstReverseIterator = std::reverse_iterator<ConstIterator>
+  // ConstIterator = ConstIteratorAdapter<Domain::ConstIterator, TImage, Value>
+  ConstImageAdapterForSubSampling* a;
+  ConstIteratorAdapter<
+    typename Z2i::Domain::ConstIterator, // ConstImageAdapterForSubSampling::Domain::ConstIterator
+    ConstImageAdapterForSubSampling,     // ConstImageAdapterForSubSampling
+    unsigned char                        // ConstImageAdapterForSubSampling::Value
+  > adapter(Z2i::Domain{}.begin(), *a);
   return 0;
 }
 //                                                                           //
