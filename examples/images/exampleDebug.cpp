@@ -37,7 +37,7 @@ int main( int /*argc*/, char** /*argv*/ )
     ConstImageAdapterForSubSampling,     // ConstImageAdapterForSubSampling
     unsigned char                        // ConstImageAdapterForSubSampling::Value
   > adapter(Z2i::Domain{}.begin(), *a);
-  std::reverse_iterator<decltype(adapter)> b(adapter);
+  boost::reverse_iterator<decltype(adapter)> b(adapter);
 
   return 0;
 }
