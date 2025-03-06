@@ -1,0 +1,11 @@
+option(DGTAL_PARAVIEW_PLUGIN "Create Paraview plugin" OFF)
+if (DGTAL_PARAVIEW_PLUGIN)
+	if (DGTAL_WITH_ITK AND ITK_FOUND)
+		message(FATAL_ERROR "ParaView plugin can not be compiled with ITK. Please turn off either option")
+	endif()
+
+	find_package(ParaView REQUIRED)
+	if (ParaView_FOUND)
+		add_subdirectory(paraview)
+	endif()
+endif()

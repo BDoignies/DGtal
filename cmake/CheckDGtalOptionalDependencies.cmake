@@ -161,7 +161,7 @@ if (DGTAL_WITH_ITK)
     set(ITK_FOUND_DGTAL 1)
     include(${ITK_USE_FILE})
     message(STATUS "ITK found ${ITK_USE_FILE}.")
-
+  
     target_link_libraries(DGtal PUBLIC ${ITK_LIBRARIES})
     set(DGtalLibDependencies ${DGtalLibDependencies} ${ITK_LIBRARIES})
     target_compile_definitions(DGtal PUBLIC  -DDGTAL_WITH_ITK)
@@ -183,7 +183,7 @@ if (DGTAL_WITH_ITK)
     endforeach()
     
     target_include_directories(DGtal PUBLIC ${FILTERED_ITK_INCLUDE_DIRS})
-
+  
     # -------------------------------------------------------------------------
     # This test is for instance used for ITK v3.x. ITK forces a limited
     # template depth. We remove this option.
@@ -196,7 +196,7 @@ if (DGTAL_WITH_ITK)
    CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_TMP}" )
        message ("         CMAKE_CXX_FLAGS=" ${CMAKE_CXX_FLAGS} )
      endif()
-
+   
   else()
     message(FATAL_ERROR "ITK not found. Check the cmake variables associated to this package or disable it.")
   endif()
