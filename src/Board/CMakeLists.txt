@@ -10,7 +10,7 @@ set(BOARD_SRC
 
 # @TODO : proper parent directory
 add_library(DGTAL_LibBoard STATIC ${BOARD_SRC})
-
+set_target_properties(DGTAL_LibBoard PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(DGTAL_LibBoard PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>

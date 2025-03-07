@@ -1,0 +1,6 @@
+NAME
+  ComputeNormals
+DEPENDS
+  VTK::FiltersCore
+  VTK::CommonCore
+
