@@ -1,27 +1,34 @@
 #include <vtkObjectFactory.h>
+
 #include <vtkInformation.h>
+#include <vtkInformationVector.h>
 
 #include "vtkComputeNormals.h"
+
+#include "../utils/DGtalVTKConverter.h"
 
 vtkStandardNewMacro(vtkComputeNormals);
 
 //----------------------------------------------------------------------------
-vtkComputeNormals::vtkComputeNormals() = default;
+vtkComputeNormals::vtkComputeNormals() 
+{
+  this->SetNumberOfInputPorts(1);
+}
 
 //----------------------------------------------------------------------------
 vtkComputeNormals::~vtkComputeNormals() = default;
 
 //----------------------------------------------------------------------------
-int vtkComputeNormals::FillInputPortInformation(int vtkNotUsed(port), vtkInformation* info) 
+void vtkComputeNormals::PrintSelf(ostream& os, vtkIndent indent)
 {
-  // now add our info
-  info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkUnstructuredGrid");
-  return 1;
+  this->Superclass::PrintSelf(os, indent);
 }
 
-
-int vtkComputeNormals::RequestData(vtkInformation* vtkNotUsed(request),
-  vtkInformationVector** inputVector, vtkInformationVector* outputVector)
+//----------------------------------------------------------------------------
+int vtkComputeNormals::RequestData(vtkInformation *request,
+                                   vtkInformationVector **inputVectors,
+                                   vtkInformationVector *outputVector)
 {
-	return 1;
+  DGtalImageFromVTK image = GetImageFromVtkInformation(inputVectors[0]->GetInformationObject(0));
+  return 1;
 }

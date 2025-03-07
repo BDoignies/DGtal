@@ -9,8 +9,24 @@
         long_help="Compute normals of a digital surface"
         short_help="Compute normals of a digital surface">
      </Documentation>
+    
+     <InputProperty
+        name="Input"
+        command="SetInputConnection">
+           <ProxyGroupDomain name="groups">
+             <Group name="sources"/>
+             <Group name="filters"/>
+           </ProxyGroupDomain>
+           <DataTypeDomain name="input_type">
+             <DataType value="vtkDataSet"/>
+           </DataTypeDomain>
+      </InputProperty>
+
+
    </SourceProxy>
   </ProxyGroup>
+
+
 
  <ParaViewFilters>
    <Category name="Plugins">

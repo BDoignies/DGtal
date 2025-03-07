@@ -2,18 +2,22 @@
 #define vtkMyElevationFilter_h
 
 #include <vtkAlgorithm.h>
-#include <vtkPolyDataAlgorithm.h>
+#include <vtkUnstructuredGridAlgorithm.h>
 
 #include "ComputeNormalsModule.h" // for export macro
 
-class COMPUTENORMALS_EXPORT vtkComputeNormals : public vtkPolyDataAlgorithm
+class COMPUTENORMALS_EXPORT vtkComputeNormals : public vtkUnstructuredGridAlgorithm
 {
 public:
   static vtkComputeNormals* New();
-  vtkTypeMacro(vtkComputeNormals, vtkPolyDataAlgorithm);
+  vtkTypeMacro(vtkComputeNormals, vtkUnstructuredGridAlgorithm);
   
-  int FillInputPortInformation(int, vtkInformation* info) override;
-  int RequestData(vtkInformation* vtkNotUsed(request), vtkInformationVector** inputVector, vtkInformationVector* outputVector) override;
+  int RequestData(vtkInformation *request,
+                  vtkInformationVector **inputVectors,
+                  vtkInformationVector *outputVector);
+
+
+  void PrintSelf(ostream& os, vtkIndent indent) override;
 protected:
   vtkComputeNormals();
   ~vtkComputeNormals();
