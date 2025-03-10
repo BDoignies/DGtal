@@ -6,6 +6,7 @@
 #include <vtkTypeInt64Array.h>
 #include <vtkDoubleArray.h>
 #include <vtkCellArray.h>
+#include <vtkCellData.h>
 #include <vtkPoints.h>
 #include <vtkLogger.h>
 
@@ -99,13 +100,33 @@ inline vtkSmartPointer<vtkCellArray> CellsFromDGtalVTKAbstractContainer(const DG
 	return cells;
 }
 
-inline std::vector<int> CellTypesFromDGtalVTKAbstractContainere(const DGtalVTKAbstractContainer* container)
+inline std::vector<int> CellTypesFromDGtalVTKAbstractContainer(const DGtalVTKAbstractContainer* container)
 {
 	std::vector<int> types(container->GetCellCount(), VTK_VOXEL);
 	return types;
 }
 
-inline vtkSmartPointer<vtkUnstructuredGrid> GetVtkDataSetFromAbstractContainer(const DGtalVTKAbstractContainer* container)
+inline vtkDataArray* CellDataFromDGtalVTKAbstractContainer(const DGtalVTKAbstractContainer* container, const std::vector<double>& data)
+{
+	if (data.size() != container->GetCellCount()) return nullptr;
+
+	vtkDoubleArray* vtkScalarArray = vtkDoubleArray::New();
+	vtkScalarArray->SetNumberOfComponents(1); 
+	
+	double* scalarPtr = ((vtkDoubleArray*)vtkScalarArray)->WritePointer(0, data.size());
+	for (unsigned int i = 0; i < container->GetCellCount(); i++)
+		scalarPtr[i] = data[i];
+
+	vtkDataArray* vtkData = vtkArrayDownCast<vtkDataArray>(vtkScalarArray);
+	vtkData->SetName("Scalars");
+
+	return vtkData;
+}
+
+inline vtkSmartPointer<vtkUnstructuredGrid> GetVtkDataSetFromAbstractContainer(
+	const DGtalVTKAbstractContainer* container, 
+	const std::vector<double>* voxelData = nullptr
+)
 {
 	auto grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 	
@@ -113,9 +134,22 @@ inline vtkSmartPointer<vtkUnstructuredGrid> GetVtkDataSetFromAbstractContainer(c
 	grid->SetPoints(pts.Get());
 
 	vtkSmartPointer<vtkCellArray> cells = CellsFromDGtalVTKAbstractContainer(container);
-	std::vector<int> types = CellTypesFromDGtalVTKAbstractContainere(container);
+	std::vector<int> types = CellTypesFromDGtalVTKAbstractContainer(container);
 
 	grid->SetCells(types.data(), cells.Get());
+
+	// Add data to grid
+	if (voxelData != nullptr)
+	{
+		vtkDataArray* data = CellDataFromDGtalVTKAbstractContainer(container, *voxelData);
+		if (data != nullptr)
+		{
+			vtkCellData* attributes = grid->GetCellData();
+			attributes->SetScalars(data);
+
+			data->Delete();
+		}
+	}
 
 	return grid;
 }

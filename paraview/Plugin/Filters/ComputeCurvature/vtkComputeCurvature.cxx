@@ -32,10 +32,14 @@ int vtkComputeCurvature::RequestData(vtkInformation *request,
                                    vtkInformationVector **inputVectors,
                                    vtkInformationVector *outputVector)
 {
+  auto params = SH3::defaultParameters() | SHG3::defaultParameters();
+  
   DGtalVTKImage image = GetImageFromVtkInformation(inputVectors[0]->GetInformationObject(0));
   DGtalVTKSurface surface(image); 
 
-  vtkSmartPointer<vtkUnstructuredGrid> grid = GetVtkDataSetFromAbstractContainer(&surface);
+  std::vector<double> curvature = SHG3::getIIMeanCurvatures( surface.GetImage(), surface.GetSurfelRange(), params );
+
+  vtkSmartPointer<vtkUnstructuredGrid> grid = GetVtkDataSetFromAbstractContainer(&surface, &curvature);
   outputVector->GetInformationObject(0)->Set(vtkDataObject::DATA_OBJECT(), grid);
   return 1;
 }

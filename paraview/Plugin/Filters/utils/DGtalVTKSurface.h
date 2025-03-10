@@ -25,7 +25,12 @@ public:
 		nbCells = range.size();
 	}
 
-	const SH3::SurfelRange& GetRange() const
+	DGtal::CountedPtr<SH3::BinaryImage> GetImage() const
+	{
+		return image;
+	}
+
+	const SH3::SurfelRange& GetSurfelRange() const
 	{
 		return range;
 	}
