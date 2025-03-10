@@ -3,32 +3,32 @@
 #include <vtkInformation.h>
 #include <vtkInformationVector.h>
 
-#include "vtkComputeNormals.h"
+#include "vtkComputeCurvature.h"
 
 #include "../utils/DGtalVTKSurface.h"
 #include "../utils/VTKToDGtalVTKImage.h"
 #include "../utils/DGtalVTKAbstractContainerToVTK.h"
 
 
-vtkStandardNewMacro(vtkComputeNormals);
+vtkStandardNewMacro(vtkComputeCurvature);
 
 //----------------------------------------------------------------------------
-vtkComputeNormals::vtkComputeNormals() 
+vtkComputeCurvature::vtkComputeCurvature() 
 {
   this->SetNumberOfInputPorts(1);
 }
 
 //----------------------------------------------------------------------------
-vtkComputeNormals::~vtkComputeNormals() = default;
+vtkComputeCurvature::~vtkComputeCurvature() = default;
 
 //----------------------------------------------------------------------------
-void vtkComputeNormals::PrintSelf(ostream& os, vtkIndent indent)
+void vtkComputeCurvature::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
 }
 
 //----------------------------------------------------------------------------
-int vtkComputeNormals::RequestData(vtkInformation *request,
+int vtkComputeCurvature::RequestData(vtkInformation *request,
                                    vtkInformationVector **inputVectors,
                                    vtkInformationVector *outputVector)
 {
