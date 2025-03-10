@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DGtalVTKImage.h"
+#include "DGtalVTKAbstractContainer.h"
 
 #include <vtkUnstructuredGrid.h>
 #include <vtkTypeInt64Array.h>
@@ -39,11 +39,11 @@ inline void FillCube(const double* center, const double* cellSize, double* locat
 	}
 }
 
-inline vtkSmartPointer<vtkPoints> PointsFromDGtalVTKImage(const DGtalVTKImage& image)
+inline vtkSmartPointer<vtkPoints> PointsFromDGtalVTKAbstractContainer(const DGtalVTKAbstractContainer* container)
 {
 	const unsigned int dim = 3;
 	const unsigned int pointsPerCube = 8;
-	const unsigned int nbPoints = pointsPerCube * image.GetCellCount(); 
+	const unsigned int nbPoints = pointsPerCube * container->GetCellCount(); 
 
 	vtkDoubleArray* vtkPointsArray = vtkDoubleArray::New();
 	vtkPointsArray->SetNumberOfComponents(dim); 
@@ -51,7 +51,7 @@ inline vtkSmartPointer<vtkPoints> PointsFromDGtalVTKImage(const DGtalVTKImage& i
 	double* pointsPtr = ((vtkDoubleArray*)vtkPointsArray)->WritePointer(0, nbPoints * dim);
 	
 	unsigned int ptCount = 0;
-	for (auto it = image.begin(); it != image.end(); ++it)
+	for (auto it = container->begin(); it != container->end(); ++it)
 	{
 		if (ptCount == nbPoints)
 		{
@@ -60,7 +60,7 @@ inline vtkSmartPointer<vtkPoints> PointsFromDGtalVTKImage(const DGtalVTKImage& i
 			return nullptr;
 		}
 
-		FillCube(*it, image.GetCellSize(), pointsPtr + ptCount * pointsPerCube * dim);
+		FillCube(*it, container->GetCellSize(), pointsPtr + ptCount * pointsPerCube * dim);
 		ptCount++;
 	}
 
@@ -70,19 +70,19 @@ inline vtkSmartPointer<vtkPoints> PointsFromDGtalVTKImage(const DGtalVTKImage& i
 	return pts;
 }
 
-inline vtkSmartPointer<vtkCellArray> CellsFromDGtalVTKImage(const DGtalVTKImage& image)
+inline vtkSmartPointer<vtkCellArray> CellsFromDGtalVTKAbstractContainer(const DGtalVTKAbstractContainer* container)
 {
 	const unsigned int dim = 3;
 	const unsigned int pointsPerCube = 8;
-	const unsigned int nbPoints = pointsPerCube * image.GetCellCount(); 
+	const unsigned int nbPoints = pointsPerCube * container->GetCellCount(); 
 
 	// Cell offsets (cube is 8 points -> 0, 8, 16, ...)
 	// +1 so that end is past last point
 	vtkSmartPointer<vtkTypeInt64Array> vtkOffsetArray = vtkSmartPointer<vtkTypeInt64Array>::New();
 	vtkOffsetArray->SetNumberOfComponents(1); 
 	
-	VtkInt64* offsetPtr = ((vtkTypeInt64Array*)vtkOffsetArray.Get())->WritePointer(0, image.GetCellCount() + 1);
-	for (unsigned int i = 0; i < image.GetCellCount() + 1; i++) 
+	VtkInt64* offsetPtr = ((vtkTypeInt64Array*)vtkOffsetArray.Get())->WritePointer(0, container->GetCellCount() + 1);
+	for (unsigned int i = 0; i < container->GetCellCount() + 1; i++) 
 		offsetPtr[i] = i * pointsPerCube;
 
 	// Cell connectivity (points of same cell are next to each other -> 0, 1, 2, ...)
@@ -99,21 +99,21 @@ inline vtkSmartPointer<vtkCellArray> CellsFromDGtalVTKImage(const DGtalVTKImage&
 	return cells;
 }
 
-inline std::vector<int> CellTypesFromDGtalVTKImage(const DGtalVTKImage& image)
+inline std::vector<int> CellTypesFromDGtalVTKAbstractContainere(const DGtalVTKAbstractContainer* container)
 {
-	std::vector<int> types(image.GetCellCount(), VTK_VOXEL);
+	std::vector<int> types(container->GetCellCount(), VTK_VOXEL);
 	return types;
 }
 
-inline vtkSmartPointer<vtkUnstructuredGrid> GetVtkDataSetFromImage(const DGtalVTKImage& image)
+inline vtkSmartPointer<vtkUnstructuredGrid> GetVtkDataSetFromAbstractContainer(const DGtalVTKAbstractContainer* container)
 {
 	auto grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 	
-	vtkSmartPointer<vtkPoints> pts = PointsFromDGtalVTKImage(image);
+	vtkSmartPointer<vtkPoints> pts = PointsFromDGtalVTKAbstractContainer(container);
 	grid->SetPoints(pts.Get());
 
-	vtkSmartPointer<vtkCellArray> cells = CellsFromDGtalVTKImage(image);
-	std::vector<int> types = CellTypesFromDGtalVTKImage(image);
+	vtkSmartPointer<vtkCellArray> cells = CellsFromDGtalVTKAbstractContainer(container);
+	std::vector<int> types = CellTypesFromDGtalVTKAbstractContainere(container);
 
 	grid->SetCells(types.data(), cells.Get());
 

@@ -1,10 +1,8 @@
 #pragma once
 
-#include "DGtal/helpers/StdDefs.h"
-#include "DGtal/helpers/Shortcuts.h"
+#include "DGtalVTKAbstractContainer.h"
+#include "ShortcutsDefs.h"
 
-using Space3 = DGtal::Z3i::KSpace;
-using SH3 = DGtal::Shortcuts<Space3>;
 
 #include <iterator>
 #include <memory>
@@ -13,7 +11,7 @@ using SH3 = DGtal::Shortcuts<Space3>;
 /**
  * @brief A container that holds information necessary to represent both VTK and DGtal voxel grids
  */
-struct DGtalVTKImage
+struct DGtalVTKImage : public DGtalVTKAbstractContainer
 {
 public:
 	static DGtalVTKImage Empty()
@@ -29,37 +27,22 @@ public:
 	) 
 	{
 		DGtalVTKImage image;
-		image.imagePos[0] = imageBounds[0];
-		image.imagePos[1] = imageBounds[2];
-		image.imagePos[2] = imageBounds[4];
+		image.SetBounds(imageBounds, cellBounds, nbCells);
 
-		image.imageSize[0] = imageBounds[1] - imageBounds[0];
-		image.imageSize[1] = imageBounds[3] - imageBounds[2];
-		image.imageSize[2] = imageBounds[5] - imageBounds[4]; 
-
-		image.cellSize[0] = cellBounds[1] - cellBounds[0];
-		image.cellSize[1] = cellBounds[3] - cellBounds[2];
-		image.cellSize[2] = cellBounds[5] - cellBounds[4]; 
-	
-		image.cellCount[0] = std::round(image.imageSize[0] / image.cellSize[0]) + 1;
-		image.cellCount[1] = std::round(image.imageSize[1] / image.cellSize[1]) + 1;
-		image.cellCount[2] = std::round(image.imageSize[2] / image.cellSize[2]) + 1;
-
-		image.nbCells = nbCells;
-		image.domain = std::make_shared<SH3::Domain>(
+		image.domain = DGtal::CountedPtr<SH3::Domain>( new SH3::Domain(
 			SH3::Point(std::floor(imageBounds[0] / image.cellSize[0]), 
 				       std::floor(imageBounds[2] / image.cellSize[1]), 
 				       std::floor(imageBounds[4] / image.cellSize[2])), 
 			SH3::Point(std::ceil (imageBounds[1] / image.cellSize[0]), 
 				       std::ceil (imageBounds[3] / image.cellSize[1]), 
 				       std::ceil (imageBounds[5] / image.cellSize[2]))
-		);
-		image.image = std::make_shared<SH3::BinaryImage>(*image.domain);
+		));
+		image.image = DGtal::CountedPtr<SH3::BinaryImage>(new SH3::BinaryImage(*image.domain));
 
 		return image;
 	}
 
-	operator bool() { return image && domain; }
+	operator bool() { return image.isValid() && domain.isValid(); }
 
 	void SetVoxel(const SH3::Point& point)
 	{
@@ -74,38 +57,31 @@ public:
 		SetVoxel(p);
 	}
 
-	unsigned int GetCellCount() const 
-	{
-		return nbCells;
-	}
 
-	const double* GetCellSize() const
+	DGtal::CountedPtr<SH3::BinaryImage> GetImage() const
 	{
-		return cellSize;
+		return image;
 	}
+	
 
 	// Iterating facilities
 public:
-	struct DgtalToVtkIterator
+	struct Iterator : public DgtalToVtkIterator::IteratorImpl
 	{
-	public:
 		using BaseIterator = SH3::Domain::ConstIterator;
 
-		using difference_type = std::ptrdiff_t;
-		using value_type = const double*;
-		using pointer = const double*;
-		using reference = const double*;
-		using iterator_category = std::forward_iterator_tag;
-
-		DgtalToVtkIterator(
-			const DGtalVTKImage* im, 
+		Iterator(
+			const DGtalVTKImage* im,
 			const BaseIterator& it
 		) : it(it), image(im)
-		{ 
-			Advance();
-		}
+		{ }
 
-		void Advance()
+		void Increment() override
+		{
+			++it;
+		}
+		
+		void Advance() override
 		{
 			while(it != image->domain->end())
 			{
@@ -116,29 +92,45 @@ public:
 			} 
 		}
 
-		DgtalToVtkIterator& operator++() 
+		bool Compare(const DgtalToVtkIterator::IteratorImpl* other) const override
 		{
-			++it;
-			Advance();
-			return *this;
+			const Iterator* otherIt = dynamic_cast<const Iterator*>(other);
+			
+			if (!otherIt) return false;
+			return (it == otherIt->it);
 		}
 
-		DgtalToVtkIterator operator++(int)
+		void FillCellCoordinates(double* coords) const override
 		{
-			DgtalToVtkIterator it = *this;
-			++(*this);
-			return it;
+			coords[0] = (*it)[0] * image->cellSize[0];
+			coords[1] = (*it)[1] * image->cellSize[1]; 
+			coords[2] = (*it)[2] * image->cellSize[2];
 		}
+		
+		const DGtalVTKImage* image;
+		BaseIterator it;
+	};
 
-		bool operator==(const DgtalToVtkIterator& other) const 
-		{
-			return it == other.it;
-		}
 
-		bool operator!=(const DgtalToVtkIterator& other) const
-		{
-			return !(*this == other);
-		}
+	DGtalVTKAbstractContainer::DgtalToVtkIterator begin() const override
+	{
+		return DgtalToVtkIterator(new Iterator(this, domain->begin()));
+	}
+
+	DGtalVTKAbstractContainer::DgtalToVtkIterator end() const 
+	{
+		return DgtalToVtkIterator(new Iterator(this, domain->end()));
+	}
+private:
+	DGtal::CountedPtr<SH3::Domain> domain;
+	DGtal::CountedPtr<SH3::BinaryImage> image;
+};
+
+/*
+
+
+
+		
 
 		const double* operator*()
 		{
@@ -148,31 +140,5 @@ public:
 
 			return currentCell;
 		}
-		
-	private:
-		const DGtalVTKImage* image;
-		BaseIterator it;
-		
-		double currentCell[3]; 
-	};
 
-	DgtalToVtkIterator begin() const 
-	{
-		return DgtalToVtkIterator(this, domain->begin());
-	}
-
-	DgtalToVtkIterator end() const 
-	{
-		return DgtalToVtkIterator(this, domain->end());
-	}
-private:
-	std::shared_ptr<SH3::Domain> domain = nullptr;
-	std::shared_ptr<SH3::BinaryImage> image = nullptr;
-	
-	unsigned int nbCells = 0;
-	unsigned int cellCount[3] = {0, 0, 0};
-	
-	double imageSize[3] = {0., 0., 0.};
-	double imagePos[3]  = {0., 0., 0.};
-	double cellSize[3]  = {0., 0., 0.};
-};
+*/

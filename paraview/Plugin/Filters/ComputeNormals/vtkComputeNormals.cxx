@@ -5,8 +5,10 @@
 
 #include "vtkComputeNormals.h"
 
-#include "../utils/VTKToDGtal.h"
-#include "../utils/DGtalVTKImageToVTK.h"
+#include "../utils/DGtalVTKSurface.h"
+#include "../utils/VTKToDGtalVTKImage.h"
+#include "../utils/DGtalVTKAbstractContainerToVTK.h"
+
 
 vtkStandardNewMacro(vtkComputeNormals);
 
@@ -31,7 +33,9 @@ int vtkComputeNormals::RequestData(vtkInformation *request,
                                    vtkInformationVector *outputVector)
 {
   DGtalVTKImage image = GetImageFromVtkInformation(inputVectors[0]->GetInformationObject(0));
-  vtkSmartPointer<vtkUnstructuredGrid> grid = GetVtkDataSetFromImage(image);
+  DGtalVTKSurface surface(image); 
+
+  vtkSmartPointer<vtkUnstructuredGrid> grid = GetVtkDataSetFromAbstractContainer(&image);
   outputVector->GetInformationObject(0)->Set(vtkDataObject::DATA_OBJECT(), grid);
   return 1;
 }
