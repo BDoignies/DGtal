@@ -22,6 +22,17 @@
            </DataTypeDomain>
       </InputProperty>
 
+      <IntVectorProperty
+        name="Curvature Type"
+        command="SetCurvatureType"
+        number_of_elements="1"
+        default_values="1">
+
+        <EnumerationDomain name="enum">
+          <Entry value="1" text="Mean Curvature"/>
+          <Entry value="2" text="Gaussian Curvature"/>
+        </EnumerationDomain>
+    </IntVectorProperty>
 
    </SourceProxy>
   </ProxyGroup>
