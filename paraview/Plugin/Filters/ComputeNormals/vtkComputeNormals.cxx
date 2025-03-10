@@ -35,7 +35,7 @@ int vtkComputeNormals::RequestData(vtkInformation *request,
   DGtalVTKImage image = GetImageFromVtkInformation(inputVectors[0]->GetInformationObject(0));
   DGtalVTKSurface surface(image); 
 
-  vtkSmartPointer<vtkUnstructuredGrid> grid = GetVtkDataSetFromAbstractContainer(&image);
+  vtkSmartPointer<vtkUnstructuredGrid> grid = GetVtkDataSetFromAbstractContainer(&surface);
   outputVector->GetInformationObject(0)->Set(vtkDataObject::DATA_OBJECT(), grid);
   return 1;
 }

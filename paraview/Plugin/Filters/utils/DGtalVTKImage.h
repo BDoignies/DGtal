@@ -42,6 +42,31 @@ public:
 		return image;
 	}
 
+	static DGtalVTKImage CreateFromImage(
+		DGtal::CountedPtr<SH3::BinaryImage> im, 
+		const double cellSize = 1.0
+	)
+	{
+		DGtalVTKImage image;
+
+		image.domain = DGtal::CountedPtr<SH3::Domain>(new SH3::Domain(im->domain()));
+		image.image = im;
+
+		auto l = image.domain->lowerBound();
+		auto u = image.domain->upperBound();
+
+		const double imgsBounds[6] = {
+			l[0] * cellSize, u[0] * cellSize,
+			l[1] * cellSize, u[1] * cellSize,
+			l[2] * cellSize, u[2] * cellSize
+		};
+		const double cellBounds[6] = {0, cellSize, 0, cellSize, 0, cellSize};
+		unsigned int nbCells = std::count(image.image->begin(), image.image->end(), true);
+		image.SetBounds(imgsBounds, cellBounds, nbCells);
+
+		return image;
+	}
+
 	operator bool() { return image.isValid() && domain.isValid(); }
 
 	void SetVoxel(const SH3::Point& point)
