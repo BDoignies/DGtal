@@ -17,16 +17,16 @@ runs:
       if: os == 'ubuntu-latest'
       uses: ./.github/actions/setup-linux
         with: 
-            python-version: python-version
+          python-version: ${{ inputs.python-version }}
 
     - name: "Setup MacOS"
       if: os == 'macOS-latest'
       uses: ./.github/actions/setup-macos
         with: 
-            python-version: python-version
+          python-version: ${{ inputs.python-version }}
 
     - name: "Setup Windows"
       if: os == 'windows-latest'
       uses: ./.github/actions/setup-linux
         with: 
-            python-version: python-version
+          python-version: ${{ inputs.python-version }}
