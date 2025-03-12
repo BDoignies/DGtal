@@ -37,4 +37,4 @@ jobs:
 
       - name: "Print cmake config"
         shell: bash
-        run: echo "${{ steps.foo.outputs.random-number }}"
+        run: echo "${{ steps.config.outputs.random-number }}"

@@ -39,6 +39,5 @@ runs:
       id: "cmake-output"
       shell: bash
       run: |
-        echo $CMAKE_CONFIG
         echo "cmake-config=$(echo $CMAKE_CONFIG)" >> $GITHUB_OUTPUT
 
