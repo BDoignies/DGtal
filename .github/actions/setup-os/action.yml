@@ -1,0 +1,32 @@
+name: "Setup-OS depending on a parameter"
+description: "Setup-OS depending on a parameter"
+inputs:
+  os:
+    description: "Select os among multiples"
+    required: true
+
+  python-version:
+    description: "Version of python to use"
+    required: true
+    default: "3.9"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup Linux"
+      if: os == 'ubuntu-latest'
+      uses: ./.github/actions/setup-linux
+        with: 
+            python-version: python-version
+
+    - name: "Setup MacOS"
+      if: os == 'macOS-latest'
+      uses: ./.github/actions/setup-macos
+        with: 
+            python-version: python-version
+
+    - name: "Setup Windows"
+      if: os == 'windows-latest'
+      uses: ./.github/actions/setup-linux
+        with: 
+            python-version: python-version
