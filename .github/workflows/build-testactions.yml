@@ -7,18 +7,19 @@ on:
     branches: [ GHActionSharing ]
 
 jobs:
-  runs-on: ${{ matrix.os }}
-  strategy:
-    fail-fast: false
-    matrix:
-      os: [ubuntu-latest, macOS-latest, windows-latest]
-      build_type: [Release]
-      python-version: ["3.9"]
-      config: ["default"]
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        build_type: [Release]
+        python-version: ["3.9"]
+        config: ["default"]
 
-  steps: 
-    - name: "Setup OS" 
-      uses: ./.github/actions/setup-os
-      with:
-        os: ${{ matrix.os }}
-        python: ${{ matrix.python-version }}
+    steps: 
+      - name: "Setup OS" 
+        uses: ./.github/actions/setup-os
+        with:
+          os: ${{ matrix.os }}
+          python: ${{ matrix.python-version }}
