@@ -20,5 +20,6 @@ runs:
          version: 2.4.0
 
      - name: Create conan default profile
+       shell: bash
        run: |
          conan profile detect --force

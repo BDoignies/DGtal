@@ -15,4 +15,5 @@ runs:
           python-version: ${{ inputs.python-version }}
 
      - name: Install macOS deps
+       shell: bash
        run: brew install boost ninja gmp libomp ccache cgal

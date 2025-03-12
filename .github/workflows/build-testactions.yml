@@ -26,4 +26,4 @@ jobs:
         uses: ./.github/actions/setup-os
         with:
           os: ${{ matrix.os }}
-          python: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }}
