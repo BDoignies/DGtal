@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         build_type: [Release]
         python-version: ["3.9"]
-        config: ["default"]
+        config-name: ["default"]
 
     steps: 
       - uses: actions/checkout@v4
@@ -27,3 +27,14 @@ jobs:
         with:
           os: ${{ matrix.os }}
           python-version: ${{ matrix.python-version }}
+
+      - name: "Get CMake config"
+        id: "config"
+        uses: ./.github/actions/dgtal-config
+        with:
+          os: ${{ matrix.os }}
+          config-name: ${{ matrix.config-name }}
+
+      - name: "Print cmake config"
+        shell: bash
+        run: echo "${{ steps.foo.outputs.random-number }}"
