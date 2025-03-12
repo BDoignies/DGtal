@@ -18,19 +18,19 @@ runs:
   using: "composite"
   steps:
     - name: "Default Linux"
-      if: ${{ inputs.os == 'ubuntu-latest' && inputs.config-name == 'default'}}
+      if: ${{ inputs.os == 'ubuntu-latest' && inputs.config-name == 'default' }}
       shell: bash
       run: |
         echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true -DDGTAL_BUILD_POLYSCOPE_EXAMPLES=true -DUSE_CCACHE=NO -DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true -DDGTAL_WITH_FFTW3=true -DDGTAL_WITH_HDF5=true -DDGTAL_WITH_OPENMP=true  -DWITH_QGLVIEWER=true  -DDGTAL_WITH_CAIRO=true -DDGTAL_WITH_ITK=true -DDGTAL_ENABLE_FLOATING_POINT_EXCEPTIONS=true -DWARNING_AS_ERROR=ON" >> $GITHUB_ENV
 
     - name: "Default MacOS"
-      if: ${{ inputs.os == 'macOS-latest" && inputs.config-name == 'default'}}
+      if: ${{ inputs.os == 'macOS-latest' && inputs.config-name == 'default' }}
       shell: bash
       run: |
         echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true -DDGTAL_BUILD_POLYSCOPE_EXAMPLES=true -DUSE_CCACHE=NO -DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true" >> $GITHUB_ENV
     
-    - name: "Default MacOS"
-      if: ${{ inputs.os == 'macOS-latest' && inputs.config-name == 'default'}}
+    - name: "Default Windows"
+      if: ${{ inputs.os == 'windows-latest' && inputs.config-name == 'default' }}
       shell: bash
       run: |
         echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true" >> $GITHUB_ENV
