@@ -38,6 +38,6 @@ runs:
     - name: "Set CMake output"
       id: "cmake-output"
       shell: bash
-      run: echo "cmake-config=${CMAKE_CONFIG}" >> $GITHUB_OUTPUT
+      run: echo "cmake-config=$CMAKE_CONFIG" >> $GITHUB_OUTPUT
 
 
