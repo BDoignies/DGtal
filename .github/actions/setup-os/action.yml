@@ -14,19 +14,19 @@ runs:
   using: "composite"
   steps:
     - name: "Setup Linux"
-      if: ${{ input.os }} == 'ubuntu-latest'
+      if: ${{ inputs.os }} == 'ubuntu-latest'
       uses: ./.github/actions/setup-linux
       with: 
         python-version: ${{ inputs.python-version }}
 
     - name: "Setup MacOS"
-      if: ${{ input.os }} == 'macOS-latest'
+      if: ${{ inputs.os }} == 'macOS-latest'
       uses: ./.github/actions/setup-macos
       with: 
         python-version: ${{ inputs.python-version }}
 
     - name: "Setup Windows"
-      if: ${{ input.os }} == 'windows-latest'
+      if: ${{ inputs.os }} == 'windows-latest'
       uses: ./.github/actions/setup-linux
       with: 
         python-version: ${{ inputs.python-version }}
