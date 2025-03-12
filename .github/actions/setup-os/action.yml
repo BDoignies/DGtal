@@ -13,20 +13,25 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: "Debug"
+      shell: bash 
+      run: |
+        echo ${{ inputs.os }}
+
     - name: "Setup Linux"
-      if: ${{ inputs.os }} == 'ubuntu-latest'
+      if: ${{ inputs.os == 'ubuntu-latest'}}
       uses: ./.github/actions/setup-linux
       with: 
         python-version: ${{ inputs.python-version }}
 
     - name: "Setup MacOS"
-      if: ${{ inputs.os }} == 'macOS-latest'
+      if: ${{ inputs.os == 'macOS-latest'}}
       uses: ./.github/actions/setup-macos
       with: 
         python-version: ${{ inputs.python-version }}
 
     - name: "Setup Windows"
-      if: ${{ inputs.os }} == 'windows-latest'
+      if: ${{ inputs.os == 'windows-latest'}}
       uses: ./.github/actions/setup-linux
       with: 
         python-version: ${{ inputs.python-version }}
