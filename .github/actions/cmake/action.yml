@@ -1,10 +1,6 @@
 name: "DGtal-cmake"
 description: "Apply CMake to DGtal"
 inputs:
-  os:
-    description: "Select os"
-    required: true
-
   dgtal:
     description: "CMakelists location"
     default: ${{ runner.workspace }}/DGtal
@@ -25,6 +21,7 @@ inputs:
 
   test:
     description: "Wether to run tests or not. This requires the proper build-config."
+    type: boolean
     default: false
 
 runs:
