@@ -1,10 +1,6 @@
 name: "DGtal-Config"
 description: "Retrieve the configuration for DGtal"
 inputs:
-  os:
-    description: "Select os"
-    required: true
-
   config-name: 
     description: "Name of the configuration. Availables are ['default', 'PR']"
     required: true
@@ -22,38 +18,38 @@ runs:
   steps:
     # Default configuration
     - name: "Default Linux"
-      if: ${{ inputs.os == 'ubuntu-latest' && inputs.config-name == 'default' }}
+      if: ${{ runner.os == 'Linux' && inputs.config-name == 'default' }}
       shell: bash
       run: |
         echo "CMAKE_CONFIG=-DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true -DDGTAL_WITH_FFTW3=true -DDGTAL_WITH_HDF5=true -DDGTAL_WITH_OPENMP=true  -DWITH_QGLVIEWER=true  -DDGTAL_WITH_CAIRO=true -DDGTAL_WITH_ITK=true -DDGTAL_ENABLE_FLOATING_POINT_EXCEPTIONS=true -DWARNING_AS_ERROR=ON -G Ninja" >> "$GITHUB_ENV"
 
     - name: "Default MacOS"
-      if: ${{ inputs.os == 'macOS-latest' && inputs.config-name == 'default' }}
+      if: ${{ runner.os == 'macOS' && inputs.config-name == 'default' }}
       shell: bash
       run: |
         echo "-DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true" >> "$GITHUB_ENV"
 
     - name: "Default Windows"
-      if: ${{ inputs.os == 'windows-latest' && inputs.config-name == 'default' }}
+      if: ${{ runner.os == 'Windows' && inputs.config-name == 'default' }}
       shell: bash
       run: |
         echo "CMAKE_CONFIG=" >> "$GITHUB_ENV"
     
     # PR Configurations
     - name: "PR Linux"
-      if: ${{ inputs.os == 'ubuntu-latest' && inputs.config-name == 'PR' }}
+      if: ${{ runner.os == 'Linux' && inputs.config-name == 'PR' }}
       shell: bash
       run: |
         echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true -DDGTAL_BUILD_POLYSCOPE_EXAMPLES=true -DUSE_CCACHE=NO -DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true -DDGTAL_WITH_FFTW3=true -DDGTAL_WITH_HDF5=true -DDGTAL_WITH_OPENMP=true  -DWITH_QGLVIEWER=true  -DDGTAL_WITH_CAIRO=true -DDGTAL_WITH_ITK=true -DDGTAL_ENABLE_FLOATING_POINT_EXCEPTIONS=true -DWARNING_AS_ERROR=ON -G Ninja" >> "$GITHUB_ENV"
 
     - name: "PR MacOS"
-      if: ${{ inputs.os == 'macOS-latest' && inputs.config-name == 'PR' }}
+      if: ${{ runner.os == 'macOS' && inputs.config-name == 'PR' }}
       shell: bash
       run: |
         echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true -DDGTAL_BUILD_POLYSCOPE_EXAMPLES=true -DUSE_CCACHE=NO -DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true" >> "$GITHUB_ENV"
 
     - name: "PR Windows"
-      if: ${{ inputs.os == 'windows-latest' && inputs.config-name == 'PR' }}
+      if: ${{ runner.os == 'Windows' && inputs.config-name == 'PR' }}
       shell: bash
       run: |
         echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true" >> "$GITHUB_ENV"

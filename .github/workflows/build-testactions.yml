@@ -12,13 +12,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest] # , macOS-latest, windows-latest]
         build_type: [Release]
         python-version: ["3.9"]
         config-name: ["default"]
 
     steps: 
-      - name: "Test"
-        shell: bash
-        run: |
-          echo ${{ runner.os }}
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: "Setup OS" 
+        uses: ./.github/actions/setup-os
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Get PR config"
+        id: "config"
+        uses: ./.github/actions/dgtal-config
+        with:
+          config-name: ${{ matrix.config-name }}
+
+      - name: "Building and Testing"
+        uses: ./.github/actions/cmake
+        with:
+          build-type: ${{ matrix.build_type }}
+          build-config: ${{ steps.config.outputs.cmake-config }}
+          test: true
