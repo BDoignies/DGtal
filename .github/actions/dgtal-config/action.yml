@@ -30,7 +30,7 @@ runs:
       if: ${{ runner.os == 'Windows' && inputs.config-name == 'default' }}
       shell: bash
       run: |
-        echo "DGTAL_CMAKE_CONFIG=" >> "$GITHUB_ENV"
+        echo "DGTAL_CMAKE_CONFIG=-DCMAKE_TOOLCHAIN_FILE='conan_toolchain.cmake' -DCMAKE_POLICY_DEFAULT_CMP0091=NEW" >> "$GITHUB_ENV"
     
     # PR Configurations
     - name: "PR Linux"
@@ -51,7 +51,7 @@ runs:
       if: ${{ runner.os == 'Windows' && inputs.config-name == 'PR' }}
       shell: bash
       run: |
-        echo "DGTAL_CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true" >> "$GITHUB_ENV"
+        echo "-DCMAKE_TOOLCHAIN_FILE='conan_toolchain.cmake' -DCMAKE_POLICY_DEFAULT_CMP0091=NEW DGTAL_CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true" >> "$GITHUB_ENV"
         echo "TESTBLACKLIST=(testLinearStructure|testIntegerConverter|testArithmeticalDSSComputerOnSurfels)" >> "$GITHUB_ENV"
     
     # Only a single step outputs variables
