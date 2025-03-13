@@ -30,7 +30,7 @@ runs:
     - name: "Create build directory"
       shell: bash
       run: |
-        cmake -E make_directory ${{ inputs.build-dir }} 
+        cmake -E make_directory $(echo "${{ inputs.build-dir }}" | sed s/\\\\/\\//g)
         echo $GITHUB_WORKSPACE
         echo $(echo "${{ inputs.dgtal }}" | sed s/\\\\/\\//g) 
 
