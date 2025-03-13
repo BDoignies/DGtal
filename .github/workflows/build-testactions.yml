@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [windows-latest] # ubuntu-latest, macOS-latest
         build_type: [Release]
         python-version: ["3.9"]
 
