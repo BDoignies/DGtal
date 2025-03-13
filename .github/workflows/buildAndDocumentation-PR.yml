@@ -98,7 +98,7 @@ jobs:
        shell: bash
        run: |
            echo ctest -C ${{ matrix.BUILD_TYPE }}  --output-on-failure -E $TESTBLACKLIST
-           ctest -C $${{ matrix.BUILD_TYPE }}  --output-on-failure -E $TESTBLACKLIST
+           ctest -C ${{ matrix.BUILD_TYPE }} --output-on-failure -E $TESTBLACKLIST
 
      - name: Test
        working-directory: ${{runner.workspace}}/build

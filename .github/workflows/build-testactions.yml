@@ -28,13 +28,17 @@ jobs:
           os: ${{ matrix.os }}
           python-version: ${{ matrix.python-version }}
 
-      - name: "Get CMake config"
+      - name: "Get PR config"
         id: "config"
         uses: ./.github/actions/dgtal-config
         with:
           os: ${{ matrix.os }}
           config-name: ${{ matrix.config-name }}
 
-      - name: "Print cmake config"
-        shell: bash
-        run: echo "${{ steps.config.outputs.cmake-config }}"
+      - name: "Building and Testing"
+        uses: ./.github/actions/dgtal-config
+        with:
+          os: ${{ matrix.os }}
+          build-type: ${{ matrix.build_type }}
+          build-config: ${{ steps.config.outputs.cmake-config }}
+          test: true

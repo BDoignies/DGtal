@@ -6,7 +6,7 @@ inputs:
     required: true
 
   config-name: 
-    description: "Name of the configuration"
+    description: "Name of the configuration. Availables are ['default', 'PR']"
     required: true
 
 outputs:
@@ -14,27 +14,53 @@ outputs:
     description: "Configuration line"
     value: ${{ steps.cmake-output.outputs.cmake-config }}
 
+env:
+  TESTBLACKLIST: "(testLinearStructure|testIntegerConverter|testArithmeticalDSSComputerOnSurfels)"
+
 runs:
   using: "composite"
   steps:
+    # Default configuration
     - name: "Default Linux"
       if: ${{ inputs.os == 'ubuntu-latest' && inputs.config-name == 'default' }}
       shell: bash
       run: |
-        echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true -DDGTAL_BUILD_POLYSCOPE_EXAMPLES=true -DUSE_CCACHE=NO -DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true -DDGTAL_WITH_FFTW3=true -DDGTAL_WITH_HDF5=true -DDGTAL_WITH_OPENMP=true  -DWITH_QGLVIEWER=true  -DDGTAL_WITH_CAIRO=true -DDGTAL_WITH_ITK=true -DDGTAL_ENABLE_FLOATING_POINT_EXCEPTIONS=true -DWARNING_AS_ERROR=ON" >> "$GITHUB_ENV"
+        echo "CMAKE_CONFIG=-DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true -DDGTAL_WITH_FFTW3=true -DDGTAL_WITH_HDF5=true -DDGTAL_WITH_OPENMP=true  -DWITH_QGLVIEWER=true  -DDGTAL_WITH_CAIRO=true -DDGTAL_WITH_ITK=true -DDGTAL_ENABLE_FLOATING_POINT_EXCEPTIONS=true -DWARNING_AS_ERROR=ON -G Ninja" >> "$GITHUB_ENV"
 
     - name: "Default MacOS"
       if: ${{ inputs.os == 'macOS-latest' && inputs.config-name == 'default' }}
       shell: bash
       run: |
-        echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true -DDGTAL_BUILD_POLYSCOPE_EXAMPLES=true -DUSE_CCACHE=NO -DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true" >> "$GITHUB_ENV"
-    
+        echo "-DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true" >> "$GITHUB_ENV"
+
     - name: "Default Windows"
       if: ${{ inputs.os == 'windows-latest' && inputs.config-name == 'default' }}
       shell: bash
       run: |
+        echo "CMAKE_CONFIG=" >> "$GITHUB_ENV"
+    
+    # PR Configurations
+    - name: "PR Linux"
+      if: ${{ inputs.os == 'ubuntu-latest' && inputs.config-name == 'PR' }}
+      shell: bash
+      run: |
+        echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true -DDGTAL_BUILD_POLYSCOPE_EXAMPLES=true -DUSE_CCACHE=NO -DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true -DDGTAL_WITH_FFTW3=true -DDGTAL_WITH_HDF5=true -DDGTAL_WITH_OPENMP=true  -DWITH_QGLVIEWER=true  -DDGTAL_WITH_CAIRO=true -DDGTAL_WITH_ITK=true -DDGTAL_ENABLE_FLOATING_POINT_EXCEPTIONS=true -DWARNING_AS_ERROR=ON -G Ninja" >> "$GITHUB_ENV"
+
+    - name: "PR MacOS"
+      if: ${{ inputs.os == 'macOS-latest' && inputs.config-name == 'PR' }}
+      shell: bash
+      run: |
+        echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true -DDGTAL_BUILD_POLYSCOPE_EXAMPLES=true -DUSE_CCACHE=NO -DDGTAL_WITH_GMP=true -DDGTAL_WITH_CGAL=true -DDGTAL_WITH_LIBIGL=true" >> "$GITHUB_ENV"
+
+    - name: "PR Windows"
+      if: ${{ inputs.os == 'windows-latest' && inputs.config-name == 'PR' }}
+      shell: bash
+      run: |
         echo "CMAKE_CONFIG=-DDGTAL_BUILD_TESTS=true -DDGTAL_RANDOMIZED_TESTING_THRESHOLD=10 -DDGTAL_BUILD_EXAMPLES=true" >> "$GITHUB_ENV"
     
+
+    
+    # Only a single step outputs variables
     - name: "Set CMake output"
       id: "cmake-output"
       shell: bash
