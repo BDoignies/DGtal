@@ -20,7 +20,7 @@ inputs:
     default: ""
 
   test:
-    description: "Wether to run tests or not. This requires the proper build-config."
+    description: "Wether to run tests or not. This requires the proper build-config and environment variable TESTBLACKLIST to be set."
     type: boolean
     default: false
 
@@ -34,8 +34,10 @@ runs:
     - name: Install additionnal dependancies (windows)
       if: ${{ runner.os == 'Windows' }}
       shell: bash
-      working-directory: ${{ inputs.build-dir }} 
-      run: conan install ${{ inputs.dgtal }} --build=missing -s:a compiler.cppstd=20
+      # Because of file separators, we can't use working directory here...
+      run: |
+        cd ${{ inputs.build-dir }} 
+        conan install ${{ inputs.dgtal }} --build=missing -s:a compiler.cppstd=20
 
     - name: Configure CMake
       shell: bash
