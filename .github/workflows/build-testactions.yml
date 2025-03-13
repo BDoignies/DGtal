@@ -12,10 +12,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest] # , macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
         build_type: [Release]
         python-version: ["3.9"]
-        config-name: ["default"]
 
     steps: 
       - uses: actions/checkout@v4
@@ -27,11 +26,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: "Get PR config"
+      - name: "Getting build config"
         id: "config"
         uses: ./.github/actions/dgtal-config
         with:
-          config-name: ${{ matrix.config-name }}
+          config-name: "PR"
 
       - name: "Building and Testing"
         uses: ./.github/actions/cmake
