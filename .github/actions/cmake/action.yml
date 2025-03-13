@@ -38,7 +38,7 @@ runs:
     - name: "Create build directory"
       shell: bash
       run: |
-        cmake -E make_directory $DGTAL_PATH
+        cmake -E make_directory $DGTAL_BUILD_PATH
 
     - name: Install additionnal dependancies (windows)
       if: ${{ runner.os == 'Windows' }}
