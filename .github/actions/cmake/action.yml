@@ -31,8 +31,8 @@ runs:
   using: "composite"
   steps:
     - name: "Create build directory"
-    - shell: bash
-    - run: cmake -E make_directory ${{ inputs.build-dir }} 
+      shell: bash
+      run: cmake -E make_directory ${{ inputs.build-dir }} 
 
     - name: Install additionnal dependancies (windows)
       if: ${{ inputs.os == 'windows-latest' }}
