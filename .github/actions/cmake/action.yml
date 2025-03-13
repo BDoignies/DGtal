@@ -32,8 +32,8 @@ runs:
       # Mixed-path are sometimes not working with CMake and Conan in bash shell
       # Avoid DGTAL_DIR for potential conflicts with CMake find_package
       run: |
-        echo "DGTAL_PATH="$(echo "${{ inputs.build-dir }}" | sed s/\\\\/\\//g)" >> "$GITHUB_ENV"
-        echo "DGTAL_BUILD_PATH=$(echo "${{ inputs.build-dir }}" | sed s/\\\\/\\//g)" >> "$GITHUB_ENV"
+        echo "DGTAL_PATH=$(echo '${{ inputs.build-dir }}' | sed s/\\\\/\\//g)" >> "$GITHUB_ENV"
+        echo "DGTAL_BUILD_PATH=$(echo '${{ inputs.build-dir }}' | sed s/\\\\/\\//g)" >> "$GITHUB_ENV"
 
     - name: "Create build directory"
       shell: bash
