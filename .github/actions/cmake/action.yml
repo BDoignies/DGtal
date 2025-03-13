@@ -31,10 +31,17 @@ runs:
       shell: bash
       run: |
         cmake -E make_directory ${{ inputs.build-dir }} 
-        ls $GITHUB_WORKSPACE
-        ls $GITHUB_WORKSPACE/DGtal 
-        ls $GITHUB_WORKSPACE/DGtal/build 
+        echo $GITHUB_WORKSPACE
+        echo ${{ inputs.dgtal }} 
+
+        echo "ls ${{ runner.workspace }}"
         ls ${{ runner.workspace }}
+
+        echo "ls ${{ inputs.dgtal }}"
+        ls ${{ inputs.dgtal }}
+        
+        echo "ls ${{ build-dir }}"
+        ls ${{ inputs.build-dir }}
 
     - name: Install additionnal dependancies (windows)
       if: ${{ runner.os == 'Windows' }}
