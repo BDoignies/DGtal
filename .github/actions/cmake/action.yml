@@ -40,7 +40,7 @@ runs:
         echo "ls ${{ inputs.dgtal }}"
         ls ${{ inputs.dgtal }}
         
-        echo "ls ${{ build-dir }}"
+        echo "ls ${{ inputs.build-dir }}"
         ls ${{ inputs.build-dir }}
 
     - name: Install additionnal dependancies (windows)
