@@ -36,7 +36,7 @@ jobs:
           config-name: ${{ matrix.config-name }}
 
       - name: "Building and Testing"
-        uses: ./.github/actions/dgtal-config
+        uses: ./.github/actions/cmake
         with:
           os: ${{ matrix.os }}
           build-type: ${{ matrix.build_type }}
