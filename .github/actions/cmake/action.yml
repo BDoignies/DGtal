@@ -31,13 +31,14 @@ runs:
       shell: bash
       run: |
         cmake -E make_directory ${{ inputs.build-dir }} 
+        ls ${{ inputs.build-dir }}
 
     - name: Install additionnal dependancies (windows)
       if: ${{ runner.os == 'Windows' }}
       shell: bash
-      # Because of file separators, we can't use working directory here...
+      working-directory: ${{ inputs.build-dir }}
       run: |
-        cd $(echo "${{ inputs.build-dir }}" | sed 's/\//\\/g')
+        ls .
         conan install ${{ inputs.dgtal }} --build=missing -s:a compiler.cppstd=20
 
     - name: Configure CMake
