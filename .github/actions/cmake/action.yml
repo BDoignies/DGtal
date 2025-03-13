@@ -32,7 +32,7 @@ runs:
       # Forces Unix-style path. Cmake with bash shell requires consistent file separator
       # Specifying shell is forced by composite actions
       run: |
-        cmake -E make_directory $(echo "${{ inputs.dgtal }}" | sed s/\\\\/\\//g)
+        cmake -E make_directory $(echo "${{ inputs.build-dir }}" | sed s/\\\\/\\//g)
 
     - name: Install additionnal dependancies (windows)
       if: ${{ runner.os == 'Windows' }}
