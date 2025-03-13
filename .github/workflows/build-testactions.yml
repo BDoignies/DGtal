@@ -21,16 +21,16 @@ jobs:
         with:
           fetch-depth: 1
 
-      # - name: "Setup OS" 
-      #   uses: ./.github/actions/setup-os
-      #   with:
-      #     python-version: ${{ matrix.python-version }}
-      # 
-      # - name: "Getting build config"
-      #   id: "config"
-      #   uses: ./.github/actions/dgtal-config
-      #   with:
-      #     config-name: "PR"
+      - name: "Setup OS" 
+        uses: ./.github/actions/setup-os
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: "Getting build config"
+        id: "config"
+        uses: ./.github/actions/dgtal-config
+        with:
+          config-name: "PR"
 
       - name: "Building and Testing"
         uses: ./.github/actions/cmake
