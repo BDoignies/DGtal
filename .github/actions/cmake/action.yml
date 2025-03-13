@@ -1,0 +1,60 @@
+name: "DGtal-cmake"
+description: "Apply CMake to DGtal"
+inputs:
+  os:
+    description: "Select os"
+    required: true
+
+  dgtal:
+    description: "CMakelists location"
+    default: ${{ runner.workspace }}
+    required: true
+
+  build-dir:
+    description: "Directory to setup cmake in"
+    default: ${{ runner.workspace }}/build
+    required: true
+
+  build-type:
+    description: "Type of build Release or Debug"
+    default: "Release"
+
+  build-config: 
+    description: "Additionnal configuration to give to cmake"
+    default: ""
+
+  test:
+    description: "Wether to run tests or not. This requires the proper build-config."
+    default: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Create build directory"
+    - shell: bash
+    - run: cmake -E make_directory ${{ inputs.build-dir }} 
+
+    - name: Install additionnal dependancies (windows)
+      if: ${{ inputs.os == 'windows-latest' }}
+      shell: bash
+      working-directory: ${{ inputs.build-dir }} 
+      run: conan install ${{ inputs.dgtal }} --build=missing -s:a compiler.cppstd=20
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{ inputs.build-dir }} 
+      run: |
+        cmake ${{ inputs.dgtal }} -DCMAKE_BUILD_TYPE=${{ inputs.build-type }} ${{ inputs.build-config }}
+
+    - name: Build
+      shell: bash
+      working-directory: ${{ inputs.build-dir }} 
+      run: cmake --build . --config ${{ inputs.build-type }} --parallel 3
+    
+    - name: Perform tests
+      if: ${{ inputs.test == true }}
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: |
+           echo ctest -C ${{ matrix.BUILD_TYPE }}  --output-on-failure -E $TESTBLACKLIST
+           ctest -C ${{ matrix.BUILD_TYPE }} --output-on-failure -E $TESTBLACKLIST   
