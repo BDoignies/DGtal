@@ -32,16 +32,16 @@ runs:
       run: |
         cmake -E make_directory ${{ inputs.build-dir }} 
         echo $GITHUB_WORKSPACE
-        echo ${{ inputs.dgtal }} 
+        echo $(echo "${{ inputs.dgtal }}" | sed s/\\/\//g) 
 
         echo "ls ${{ runner.workspace }}"
-        ls ${{ runner.workspace }}
+        ls $(echo "${{ runner.workspace }}" | sed s/\\/\//g)
 
         echo "ls ${{ inputs.dgtal }}"
-        ls ${{ inputs.dgtal }}
+        ls $(echo "${{ inputs.dgtal }}" | sed s/\\/\//g)
         
         echo "ls ${{ inputs.build-dir }}"
-        ls ${{ inputs.build-dir }}
+        ls $(echo "${{ inputs.build-dir }}" | sed s/\\/\//g)
 
     - name: Install additionnal dependancies (windows)
       if: ${{ runner.os == 'Windows' }}
