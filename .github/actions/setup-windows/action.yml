@@ -11,7 +11,7 @@ runs:
   steps:
      -name: "Skipping"
       shell: bash
-      runs: |
+      run: |
         echo "Skipping";
 
      # - name: Set up Python ${{ inputs.python-version }}
