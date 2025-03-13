@@ -7,7 +7,7 @@ inputs:
 
   dgtal:
     description: "CMakelists location"
-    default: ${{ runner.workspace }}
+    default: ${{ runner.workspace }}/DGtal
     required: true
 
   build-dir:
