@@ -1,4 +1,5 @@
 set(DGTAL_TESTS_SRC
+   test-new
    viewer3D-1-points
    viewer3D-2-sets
    viewer3D-3-objects

@@ -1,0 +1,417 @@
+#pragma once
+
+#include "NewDisplay3D.h"
+
+template <typename>
+struct is_vector : std::false_type {};
+template <typename T, typename A>
+struct is_vector<std::vector<T, A>> : std::true_type {};
+
+template<typename Space, typename KSpace>
+template<typename TIndices>
+template<typename VType>
+inline void DGtal::NewDisplay3D<Space, KSpace>::DisplayData<TIndices>::Append(
+    std::span<VType> v, 
+    std::span<TIndices> i,
+    std::span<double> s
+)
+{
+    // Try to automatically fill indices
+    if (i.size() != 0)
+    {
+        indices.insert(indices.end(), i.begin(), i.end());
+    }
+    else
+    {
+        // For std::vector we need to resize first
+        TIndices container;
+        if constexpr (is_vector<TIndices>::value)
+            container.resize(v.size());
+
+        for (size_t i = 0; i < v.size(); i++)
+            container[i] = vertices.size() + i; 
+
+        indices.insert(indices.end(), container.begin(), container.end());
+    }
+    scalars.insert(scalars.end(), s.begin(), s.end());
+    
+    vertices.resize(vertices.size() + v.size());
+    for (size_t i = 0; i < v.size(); i++)
+    {
+        size_t d = 0;
+        for (auto it = std::begin(v[i]); it != std::end(v[i]); ++it)
+            vertices[i][d++] = *it;
+    }
+}
+
+template<typename Space, typename KSpace>
+template<typename TData>
+inline DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::DataGroup(
+    const std::string& prefix, 
+    const std::string& defaultGroup) : 
+    prefix(prefix), defaultGroup(defaultGroup)
+{ }
+
+template<typename Space, typename KSpace>
+template<typename TData>
+inline void DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::NewGroup(
+    const std::string& newGroup)
+{
+    const std::string& newPrefix = prefix;
+    
+    std::string newGroupName = newGroup;
+    bool shouldCreateWithPrefix = false;
+    
+    if (newGroupName.empty())
+    {
+        shouldCreateWithPrefix = true;
+    }
+    else if (groups.find(newGroupName) != groups.end())
+    {
+        shouldCreateWithPrefix = true;
+        newPrefix = newGroup;
+    }
+
+    if (shouldCreateWithPrefix)
+    {
+        uint32_t count = groups.size();
+        
+        // Safe guard if the user adds a group that would collide with existing name
+        do
+        {
+            newGroupName = newPrefix + std::to_string(count++);
+        } while(groups.find(newGroupName) != groups.end());
+    }
+  
+    SetCurrentGroup(newGroupName);
+}
+ 
+template<typename Space, typename KSpace>
+template<typename TData>
+inline void DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::SetCurrentGroup(
+    const std::string& group
+)
+{
+    currentGroup = group;
+}
+
+template<typename Space, typename KSpace>
+template<typename TData>
+inline bool DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::IsDefaultGroupSelected() const
+{
+    if (currentGroup == defaultGroup)
+        return true;
+    return false;
+}
+
+template<typename Space, typename KSpace>
+template<typename TData>
+inline TData& DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::GetInsertData() 
+{
+    if (IsDefaultGroupSelected())
+    {
+        noGroup.push_back(TData{});
+        return noGroup.back();
+    }
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addClippingPlane(
+    double a, double b, double c, double d
+)
+{
+    double norm = std::sqrt(a * a + b * b + c * c);
+    RealPoint n = {a / norm, b / norm, c / norm};
+    RealPoint p = {0, 0, 0};
+    if      (a != 0) p[0] = -d / a;
+    else if (b != 0) p[1] = -d / b;
+    else if (c != 0) p[2] = -d / c;
+    
+    planes.push_back({n, p, currentStyle});
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::createNewGroup(
+    const std::string& of, const std::string& s
+)
+{
+         if (of == "lines")         lines.NewGroup(s);
+    else if (of == "quads")         quads.NewGroup(s);
+    else if (of == "images")       images.NewGroup(s);
+    else if (of == "points")       points.NewGroup(s);
+    else if (of == "voxels")       voxels.NewGroup(s);
+    else if (of == "polygons")   polygons.NewGroup(s);
+    else if (of == "triangles") triangles.NewGroup(s); 
+    else { trace.warning() << "Unknown type of group"; };
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addQuad(
+    const RealPoint& p1, const RealPoint& p2, 
+    const RealPoint& p3, const RealPoint& p4
+)
+{
+    RealPoint u = p2 - p1;
+    RealPoint v = p3 - p2;
+    RealPoint n = crossProduct(u, v);
+
+    addQuadWithNormal(p1, p2, p3, p4, n);
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addQuadWithNormal(
+    const RealPoint& p1, const RealPoint& p2, 
+    const RealPoint& p3, const RealPoint& p4,
+    const RealPoint& n
+)
+{
+    RealPoint u = p2 - p1;
+    RealPoint v = p3 - p2;
+    RealPoint cn = DGtal::crossProduct(u, v);
+
+    if (DGtal::dotProduct(n, cn) < 0)
+        std::swap(p2, p4);
+    
+    auto& q = quads.GetInsertData();
+    q.Append({ p1, p2, p3, p4 });
+    if (quads.IsDefaultGroupSelected())
+    {
+        q.transform = Eigen::Affine3d::Identity();
+        q.s = currentStyle;
+    }
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addQuadFromSurfelCenter(
+    const RealPoint &baseQuadCenter, 
+    bool xSurfel, bool ySurfel, bool zSurfel
+)
+{  
+    double x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
+
+    if(zSurfel)
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]+0.5; y2= baseQuadCenter[1]-0.5; z2= baseQuadCenter[2]-0.5;
+        x3= baseQuadCenter[0]+0.5; y3= baseQuadCenter[1]+0.5; z3= baseQuadCenter[2]-0.5;
+        x4= baseQuadCenter[0]-0.5; y4= baseQuadCenter[1]+0.5; z4= baseQuadCenter[2]-0.5;
+    }
+    else if(ySurfel)
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]-0.5; y2= baseQuadCenter[1]-0.5; z2= baseQuadCenter[2]+0.5;
+        x3= baseQuadCenter[0]+0.5; y3= baseQuadCenter[1]-0.5; z3= baseQuadCenter[2]+0.5;
+        x4= baseQuadCenter[0]+0.5; y4= baseQuadCenter[1]-0.5; z4= baseQuadCenter[2]-0.5;
+    }
+    else
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]-0.5; y2= baseQuadCenter[1]+0.5; z2= baseQuadCenter[2]-0.5;
+        x3= baseQuadCenter[0]-0.5; y3= baseQuadCenter[1]+0.5; z3= baseQuadCenter[2]+0.5;
+        x4= baseQuadCenter[0]-0.5; y4= baseQuadCenter[1]-0.5; z4= baseQuadCenter[2]+0.5;
+    }
+
+    addQuad(RealPoint(x1, y1, z1), RealPoint(x2 ,y2, z2),
+            RealPoint(x3, y3, z3), RealPoint(x4, y4, z4));
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addQuadFromSurfelCenterWithNormal(
+    const RealPoint &baseQuadCenter, bool xSurfel, bool ySurfel, bool zSurfel,
+    const RealVector &aNormal,
+    const bool enableReorientation,
+    const bool sign,
+    const bool enableDoubleFace
+)
+{    
+    double x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
+
+    if(zSurfel)
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]+0.5; y2= baseQuadCenter[1]-0.5; z2= baseQuadCenter[2]-0.5;
+        x3= baseQuadCenter[0]+0.5; y3= baseQuadCenter[1]+0.5; z3= baseQuadCenter[2]-0.5;
+        x4= baseQuadCenter[0]-0.5; y4= baseQuadCenter[1]+0.5; z4= baseQuadCenter[2]-0.5;
+    }
+    else if(ySurfel)
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]-0.5; y2= baseQuadCenter[1]-0.5; z2= baseQuadCenter[2]+0.5;
+        x3= baseQuadCenter[0]+0.5; y3= baseQuadCenter[1]-0.5; z3= baseQuadCenter[2]+0.5;
+        x4= baseQuadCenter[0]+0.5; y4= baseQuadCenter[1]-0.5; z4= baseQuadCenter[2]-0.5;
+    }
+    else
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]-0.5; y2= baseQuadCenter[1]+0.5; z2= baseQuadCenter[2]-0.5;
+        x3= baseQuadCenter[0]-0.5; y3= baseQuadCenter[1]+0.5; z3= baseQuadCenter[2]+0.5;
+        x4= baseQuadCenter[0]-0.5; y4= baseQuadCenter[1]-0.5; z4= baseQuadCenter[2]+0.5;
+    }
+
+    addQuadWithNormal(RealPoint(x1, y1, z1), RealPoint(x2 ,y2, z2),
+                      RealPoint(x3, y3, z3), RealPoint(x4, y4, z4), aNormal);
+
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addTriangle(
+    const RealPoint &p1, 
+    const RealPoint &p2, 
+    const RealPoint &p3
+)
+{
+    auto& t = triangles.GetInsertData();
+    t.Append({ p1, p2, p3 });
+    
+    if (triangles.IsDefaultGroupSelected())
+    {
+        t.transform = Eigen::Affine3d::Identity();
+        t.s = currentStyle;
+    }
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addPolygon(const std::vector<RealPoint> &vertices)
+{
+    auto& p = polygons.GetInsertData();
+    p.Append(vertices);
+    
+    if (polygons.IsDefaultGroupSelected())
+    {
+        p.transform = Eigen::Affine3d::Identity();
+        p.s = currentStyle;
+    }
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addLine(
+    const RealPoint &p1, 
+    const RealPoint &p2, 
+    const double width
+)
+{
+    auto& l = lines.GetInsertData();
+    l.Append({ p1, p2 });
+    
+    if (lines.IsDefaultGroupSelected())
+    {
+        l.transform = Eigen::Affine3d::Identity();
+        l.s = currentStyle;
+    }
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addCube(const RealPoint &center, double width)
+{
+    static constexpr RealPoint cubePositions[8] = {
+        {-1, -1, -1}, 
+        { 1, -1, -1},
+        { 1,  1, -1},
+        {-1,  1, -1},
+        {-1, -1,  1}, 
+        { 1, -1,  1},
+        { 1,  1,  1},
+        {-1,  1,  1}
+    };
+
+    const std::array<RealPoint, 8> points = {
+        center + 0.5 * width * cubePositions[0], 
+        center + 0.5 * width * cubePositions[1], 
+        center + 0.5 * width * cubePositions[2], 
+        center + 0.5 * width * cubePositions[3], 
+        center + 0.5 * width * cubePositions[4], 
+        center + 0.5 * width * cubePositions[5], 
+        center + 0.5 * width * cubePositions[6], 
+        center + 0.5 * width * cubePositions[7] 
+    };
+     
+    auto& v = voxels.GetInsertData();
+    v.Append(points);
+    
+    if (voxels.IsDefaultGroupSelected())
+    {
+        v.transform = Eigen::Affine3d::Identity();
+        v.s = currentStyle;
+    }
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addBall(
+    const RealPoint &center ,
+    const double radius,
+    const unsigned int resolution)
+{
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addPrism(
+    const RealPoint &baseQuadCenter,
+    bool xSurfel, bool ySurfel, bool zSurfel, double sizeShiftFactor,
+    double sizeFactor, bool isSigned, bool aSign
+)
+{
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addBasicSurfel(
+    const RealPoint &baseQuadCenter,
+    bool xSurfel, bool ySurfel, bool zSurfel
+)
+{
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addCone(
+    const RealPoint &p1, const RealPoint &p2,
+    double width
+)
+{
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::addCylinder(
+    const RealPoint  &p1, const RealPoint &p2,
+    const double width
+)
+{
+}
+
+ template < typename Space ,typename KSpace >
+inline
+typename DGtal::NewDisplay3D< Space ,KSpace >::RealPoint
+DGtal::NewDisplay3D< Space ,KSpace >::embed( const typename Space::Point & dp ) const
+{
+  ASSERT( myEmbedder->isValid());
+  return myEmbedder->embed(dp);
+}
+
+template < typename Space ,typename KSpace >
+inline
+typename DGtal::NewDisplay3D< Space ,KSpace >::RealPoint
+DGtal::NewDisplay3D< Space ,KSpace >::embedKS( const typename KSpace::SCell & scell ) const
+{
+  ASSERT( mySCellEmbedder->isValid());
+  return mySCellEmbedder->embed(scell);
+}
+
+template < typename Space ,typename KSpace >
+inline
+typename DGtal::NewDisplay3D< Space ,KSpace >::RealPoint
+DGtal::NewDisplay3D< Space ,KSpace >::embedKS( const TransformedPrism & aTrans ) const
+{
+  ASSERT( mySCellEmbedder->isValid());
+  return mySCellEmbedder->embed(aTrans.mySurfel);
+}
+
+
+template < typename Space ,typename KSpace >
+inline
+typename DGtal::NewDisplay3D< Space ,KSpace >::RealPoint
+DGtal::NewDisplay3D< Space ,KSpace >::embedK( const typename KSpace::Cell & cell ) const
+{
+  ASSERT( myCellEmbedder->isValid());
+  return myCellEmbedder->embed(cell);
+}
+
+
+ 
