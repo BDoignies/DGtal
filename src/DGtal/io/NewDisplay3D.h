@@ -55,7 +55,7 @@ namespace DGtal
             DGtal::uint64_t mode = DrawMode::DEFAULT;
             DGtal::Color color = DGtal::Color::White;
             
-            bool faceCulling = false;
+            bool backfaceCulling = false;
         };
         
         /**
@@ -78,7 +78,7 @@ namespace DGtal
             /**
              * @brief Append data of an other display data 
              *
-             * This function is usefull to build meshes and such 
+             * This function is usefull to build objects 
              * itteratively. 
              * 
              * @param other The data 
@@ -97,90 +97,90 @@ namespace DGtal
             Style s;
         };
 
-    struct ClippingPlane
-    {
-        RealPoint n; /// Normal of the plane
-        RealPoint a; /// Point inside the plane
+        struct ClippingPlane
+        {
+            RealPoint n; /// Normal of the plane
+            RealPoint a; /// Point inside the plane
 
-        Style s;
-    };
+            Style s;
+        };
 
-    using IndexType = int;
-    using Points = DisplayData<std::array<IndexType, 1>>; // Whatever, not used anyway
-    using Lines  = DisplayData<std::array<IndexType, 2>>;
-    using Triangles = DisplayData<std::array<IndexType, 3>>;
-    using Quads = DisplayData<std::array<IndexType, 4>>;
-    using Polygonals = DisplayData<std::vector<IndexType>>;
-    using Voxels = DisplayData<std::array<IndexType, 8>>;
+        using IndexType = uint32_t;
+        using Points = DisplayData<std::array<IndexType, 1>>;
+        using Lines  = DisplayData<std::array<IndexType, 2>>;
+        using Triangles = DisplayData<std::array<IndexType, 3>>;
+        using Quads = DisplayData<std::array<IndexType, 4>>;
+        using Polygonals = DisplayData<std::vector<IndexType>>;
+        using Voxels = DisplayData<std::array<IndexType, 8>>;
 
-    using Image = DisplayData<std::array<IndexType, 3>>; 
+        using Image = DisplayData<std::array<IndexType, 3>>; 
 
-    /**
+        /**
          * \brief Groups of data
          *
          * The class manages a group of data, with the ability to register "default group" where object can be pushed indepently
          */
-    template<typename TData>
-    struct DataGroup 
-    {
-        const std::string prefix;
-        const std::string defaultGroup;
+        template<typename TData>
+        struct DataGroup 
+        {
+            const std::string prefix;
+            const std::string defaultGroup;
 
-        std::string currentGroup;
+            std::string currentGroup;
 
-        DataGroup(const std::string& prefix, const std::string& defaultGroup);
+            DataGroup(const std::string& prefix, const std::string& defaultGroup);
 
-        void NewGroup(const std::string& newGroup);
-        void SetCurrentGroup(const std::string& group);
-        
+            void NewGroup(const std::string& newGroup);
+            void SetCurrentGroup(const std::string& group);
+            
+            /**
+             * @brief Retrieves the location to insert new data in
+             *
+             * It either returns a reference to an element of \ref groups or
+             * creates a new element in noGroup.
+             *
+             * The purpose of this method is to have some unification as to 
+             * how data is inserted, regardless of the currentGroup
+             *
+             * @return A reference to element location
+             */
+            TData& GetInsertData(); 
+
+            /**
+             * @brief Tells if the default group is currently selected
+             *
+             * The purpose of this method is to tell wether GetInsertData
+             * created or not a new element
+             *
+             * @return True if the default group is selected, false otherwise
+             */
+            bool IsDefaultGroupSelected() const;
+
+            std::vector<TData> noGroup;
+            std::map<std::string, TData> groups;
+        };
+
+    public:
         /**
-         * @brief Retrieves the location to insert new data in
-         *
-         * It either returns a reference to an element of \ref groups or
-         * creates a new element in noGroup.
-         *
-         * The purpose of this method is to have some unification as to 
-         * how data is inserted, regardless of the currentGroup
-         *
-         * @return A reference to element location
-         */
-        TData& GetInsertData(); 
-
-        /**
-         * @brief Tells if the default group is currently selected
-         *
-         * The purpose of this method is to tell wether GetInsertData
-         * created or not a new element
-         *
-         * @return True if the default group is selected, false otherwise
-         */
-        bool IsDefaultGroupSelected() const;
-
-        std::vector<TData> noGroup;
-        std::map<std::string, TData> groups;
-    };
-
-public:
-    /**
-         * @brief Constructor
-         *
-         * @param KSEmb The khalimsky space for embedding
-         */
-    NewDisplay3D( const KSpace & KSEmb )
-        : myKSpace( KSEmb )
-        , myEmbedder( new Embedder() )
-        , myCellEmbedder( new CellEmbedder( myKSpace ) )
-        , mySCellEmbedder( new SCellEmbedder( myKSpace )  )
-        , points("points_", "points")
-        , lines("lines_", "lines") 
-        , triangles("triangles_", "triangles")
-        , quads("quads_", "quads")
-        , polygons("polygons_", "polygons")
-          , voxels("voxels_", "voxels")
-          , images("images_", "images")
-        {}
-        
-        NewDisplay3D() : NewDisplay3D(KSpace()) {}
+             * @brief Constructor
+             *
+             * @param KSEmb The khalimsky space for embedding
+             */
+        NewDisplay3D( const KSpace & KSEmb )
+            : myKSpace( KSEmb )
+            , myEmbedder( new Embedder() )
+            , myCellEmbedder( new CellEmbedder( myKSpace ) )
+            , mySCellEmbedder( new SCellEmbedder( myKSpace )  )
+            , points("points_", "points")
+            , lines("lines_", "lines") 
+            , triangles("triangles_", "triangles")
+            , quads("quads_", "quads")
+            , polygons("polygons_", "polygons")
+            , voxels("voxels_", "voxels")
+            , images("images_", "images")
+            {}
+            
+            NewDisplay3D() : NewDisplay3D(KSpace()) {}
 
     public: 
         /// @return the embedder Point -> RealPoint
@@ -532,7 +532,7 @@ public:
          */
         RealPoint embedK( const typename KSpace::Cell & cell ) const;
 
-protected:
+    protected:
         /// The Khalimsky space
         KSpace myKSpace;
         /// an embeder from a dgtal space point to a real space point
@@ -546,10 +546,12 @@ protected:
         Style currentStyle;    
         
         // Geometrical data  
-        DataGroup<Points> points; //< List of points
-        DataGroup<Lines> lines;   //< 
+        DataGroup<Points> points; 
+        DataGroup<Lines> lines;   
         DataGroup<Triangles> triangles;
+        DataGroup<Triangles> cones;
         DataGroup<Quads> quads;
+        DataGroup<Quads> prisms;
         DataGroup<Polygonals> polygons;
         DataGroup<Voxels> voxels; 
         DataGroup<Image> images;

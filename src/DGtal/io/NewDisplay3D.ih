@@ -19,7 +19,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::DisplayData<TIndices>::Append(
     // Try to automatically fill indices
     if (i.size() != 0)
     {
-        indices.insert(indices.end(), i.begin(), i.end());
+        indices.emplace_back(i.begin(), i.end());
     }
     else
     {
@@ -31,7 +31,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::DisplayData<TIndices>::Append(
         for (size_t i = 0; i < v.size(); i++)
             container[i] = vertices.size() + i; 
 
-        indices.insert(indices.end(), container.begin(), container.end());
+        indices.push_back(std::move(container));
     }
     scalars.insert(scalars.end(), s.begin(), s.end());
     
@@ -113,6 +113,7 @@ inline TData& DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::GetInsertDat
         noGroup.push_back(TData{});
         return noGroup.back();
     }
+    return groups[currentGRoup];
 }
 
 template<typename Space, typename KSpace>
@@ -341,6 +342,14 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addBall(
     const double radius,
     const unsigned int resolution)
 {
+    auto& p = points.GetInsertData();
+    p.Append({ center });
+    
+    if (center.IsDefaultGroupSelected())
+    {
+        p.transform = Eigen::Affine3d::Identity();
+        p.s = currentStyle;
+    }
 }
 
 template<typename Space, typename KSpace>
@@ -349,7 +358,129 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addPrism(
     bool xSurfel, bool ySurfel, bool zSurfel, double sizeShiftFactor,
     double sizeFactor, bool isSigned, bool aSign
 )
-{
+{ 
+    const double myCurrentfShiftVisuPrisms = 1.;
+    updateBoundingBox(baseQuadCenter);
+    double retract = 0.05*(sizeShiftFactor+myCurrentfShiftVisuPrisms);
+    double width   = 0.03*(sizeShiftFactor+myCurrentfShiftVisuPrisms);
+
+
+    double x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
+    double x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8;
+    double dx, dy, dz;
+
+
+    ASSERT( xSurfel || ySurfel || zSurfel );
+    boost::ignore_unused_variable_warning( xSurfel );
+
+    if(zSurfel)
+    {
+        x1= baseQuadCenter[0]-(0.5*sizeFactor); y1= baseQuadCenter[1]-(0.5*sizeFactor); z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]+(0.5*sizeFactor); y2= baseQuadCenter[1]-(0.5*sizeFactor); z2= baseQuadCenter[2]-0.5;
+        x3= baseQuadCenter[0]+(0.5*sizeFactor); y3= baseQuadCenter[1]+(0.5*sizeFactor); z3= baseQuadCenter[2]-0.5;
+        x4= baseQuadCenter[0]-(0.5*sizeFactor); y4= baseQuadCenter[1]+(0.5*sizeFactor); z4= baseQuadCenter[2]-0.5;
+        y1+=retract; y2+=retract; y3-=retract; y4-=retract;
+        x1+=retract; x2-=retract; x3-=retract; x4+=retract;
+        dx=0.0; dy=0.0; dz=width;
+    }
+    else if(ySurfel)
+    {
+        x1= baseQuadCenter[0]-(0.5*sizeFactor); y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-(0.5*sizeFactor);
+        x2= baseQuadCenter[0]-(0.5*sizeFactor); y2= baseQuadCenter[1]-0.5; z2= baseQuadCenter[2]+(0.5*sizeFactor);
+        x3= baseQuadCenter[0]+(0.5*sizeFactor); y3= baseQuadCenter[1]-0.5; z3= baseQuadCenter[2]+(0.5*sizeFactor);
+        x4= baseQuadCenter[0]+(0.5*sizeFactor); y4= baseQuadCenter[1]-0.5; z4= baseQuadCenter[2]-(0.5*sizeFactor);
+        x1+=retract; x2+=retract; x3-=retract; x4-=retract;
+        z1+=retract; z2-=retract; z3-=retract; z4+=retract;
+        dx=0.0; dy=width; dz=0.0;
+    }
+    else
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-(0.5*sizeFactor); z1= baseQuadCenter[2]-(0.5*sizeFactor);
+        x2= baseQuadCenter[0]-0.5; y2= baseQuadCenter[1]+(0.5*sizeFactor); z2= baseQuadCenter[2]-(0.5*sizeFactor);
+        x3= baseQuadCenter[0]-0.5; y3= baseQuadCenter[1]+(0.5*sizeFactor); z3= baseQuadCenter[2]+(0.5*sizeFactor);
+        x4= baseQuadCenter[0]-0.5; y4= baseQuadCenter[1]-(0.5*sizeFactor); z4= baseQuadCenter[2]+(0.5*sizeFactor);
+        y1+=retract; y2-=retract; y3-=retract; y4+=retract;
+        z1+=retract; z2+=retract; z3-=retract; z4-=retract;
+        dx=width; dy=0.0; dz=0.0;
+    }
+
+    double xcenter= (x1+x2+x3+x4)/4.0;
+    double ycenter= (y1+y2+y3+y4)/4.0;
+    double zcenter= (z1+z2+z3+z4)/4.0;
+
+    x5=x1-dx; y5=y1-dy; z5= z1-dz;
+    x6=x2-dx; y6=y2-dy; z6= z2-dz;
+    x7=x3-dx; y7=y3-dy; z7= z3-dz;
+    x8=x4-dx; y8=y4-dy; z8= z4-dz;
+
+    x1=x1+dx; y1=y1+dy; z1= z1+dz;
+    x2=x2+dx; y2=y2+dy; z2= z2+dz;
+    x3=x3+dx; y3=y3+dy; z3= z3+dz;
+    x4=x4+dx; y4=y4+dy; z4= z4+dz;
+
+    //if cell is oriented positively we retrac the upper face:
+    if(isSigned && aSign)
+    {
+        x1= 0.6*x1+0.4*xcenter; x2= 0.6*x2+0.4*xcenter; x3= 0.6*x3+0.4*xcenter; x4= 0.6*x4+0.4*xcenter;
+        y1= 0.6*y1+0.4*ycenter; y2= 0.6*y2+0.4*ycenter; y3= 0.6*y3+0.4*ycenter; y4= 0.6*y4+0.4*ycenter;
+        z1= 0.6*z1+0.4*zcenter; z2= 0.6*z2+0.4*zcenter; z3= 0.6*z3+0.4*zcenter; z4= 0.6*z4+0.4*zcenter;
+    }
+    else if (isSigned)
+    {
+        x5= 0.6*x5+0.4*xcenter; x6= 0.6*x6+0.4*xcenter; x7= 0.6*x7+0.4*xcenter; x8= 0.6*x8+0.4*xcenter;
+        y5= 0.6*y5+0.4*ycenter; y6= 0.6*y6+0.4*ycenter; y7= 0.6*y7+0.4*ycenter; y8= 0.6*y8+0.4*ycenter;
+        z5= 0.6*z5+0.4*zcenter; z6= 0.6*z6+0.4*zcenter; z7= 0.6*z7+0.4*zcenter; z8= 0.6*z8+0.4*zcenter;
+    }
+
+    const std::array<std::array<RealPoint, 4>, 6> vertices = {
+        { 
+            RealPoint{ x1, y1, z1 }, 
+            RealPoint{ x2, y2, z2 },
+            RealPoint{ x3, y3, z3 }, 
+            RealPoint{ x4, y4, z4 }
+        },
+        { 
+            RealPoint{ x5, y5, z5 }, 
+            RealPoint{ x8, y8, z8 },
+            RealPoint{ x7, y7, z7 }, 
+            RealPoint{ x6, y6, z6 }
+        },
+        { 
+            RealPoint{ x1, y1, z1 }, 
+            RealPoint{ x5, y5, z5 }, 
+            RealPoint{ x6, y6, z6 },
+            RealPoint{ x2, y2, z2 }
+        },
+        { 
+            RealPoint{ x2, y2, z2 },
+            RealPoint{ x6, y6, z6 },
+            RealPoint{ x7, y7, z7 }, 
+            RealPoint{ x3, y3, z3 }
+        },
+        { 
+            RealPoint{ x3, y3, z3 }, 
+            RealPoint{ x7, y7, z7 }, 
+            RealPoint{ x8, y8, z8 },
+            RealPoint{ x4, y4, z4 }
+        }, 
+        { 
+            RealPoint{ x4, y4, z4 },
+            RealPoint{ x8, y8, z8 },
+            RealPoint{ x5, y5, z5 }, 
+            RealPoint{ x1, y1, z1 }
+        } 
+    };
+   
+    createNewGroup("cubes", "Prism");
+    auto& prism = cubes.GetInsertData();
+    for (const auto& face : vertices)
+        prism.append(face);
+
+    if (cubes.IsDefaultSelected())
+    {
+        prism.transform = Eigen::Affine3d::Identity();
+        prism.s = currentStyle;
+    }
 }
 
 template<typename Space, typename KSpace>
@@ -358,6 +489,35 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addBasicSurfel(
     bool xSurfel, bool ySurfel, bool zSurfel
 )
 {
+    ASSERT( xSurfel || ySurfel || zSurfel );
+    boost::ignore_unused_variable_warning( xSurfel );
+
+    double x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
+
+    if(zSurfel)
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]+0.5; y2= baseQuadCenter[1]-0.5; z2= baseQuadCenter[2]-0.5;
+        x3= baseQuadCenter[0]+0.5; y3= baseQuadCenter[1]+0.5; z3= baseQuadCenter[2]-0.5;
+        x4= baseQuadCenter[0]-0.5; y4= baseQuadCenter[1]+0.5; z4= baseQuadCenter[2]-0.5;
+    }
+    else if(ySurfel)
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]-0.5; y2= baseQuadCenter[1]-0.5; z2= baseQuadCenter[2]+0.5;
+        x3= baseQuadCenter[0]+0.5; y3= baseQuadCenter[1]-0.5; z3= baseQuadCenter[2]+0.5;
+        x4= baseQuadCenter[0]+0.5; y4= baseQuadCenter[1]-0.5; z4= baseQuadCenter[2]-0.5;
+    }
+    else
+    {
+        x1= baseQuadCenter[0]-0.5; y1= baseQuadCenter[1]-0.5; z1= baseQuadCenter[2]-0.5;
+        x2= baseQuadCenter[0]-0.5; y2= baseQuadCenter[1]+0.5; z2= baseQuadCenter[2]-0.5;
+        x3= baseQuadCenter[0]-0.5; y3= baseQuadCenter[1]+0.5; z3= baseQuadCenter[2]+0.5;
+        x4= baseQuadCenter[0]-0.5; y4= baseQuadCenter[1]-0.5; z4= baseQuadCenter[2]+0.5;
+    }
+
+    addQuad(RealPoint(x1, y1, z1), RealPoint(x2 ,y2, z2),
+            RealPoint(x3, y3, z3), RealPoint(x4, y4, z4));
 }
 
 template<typename Space, typename KSpace>
@@ -366,6 +526,130 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addCone(
     double width
 )
 {
+    int nbPoints = 6; //the number of point on the base of the cone
+    double degree = 360 / nbPoints; // the angle between two points
+    double radian = degree * M_PI/180.0;
+    double norm; // norm of the vectors
+
+    // A(x1,y1,z1) and B(x2,y2,z2) vector AB
+    double xab, yab, zab;
+
+    xab = p2[0]-p1[0];
+    yab = p2[1]-p1[1];
+    zab = p2[2]-p1[2];
+
+    norm = sqrt( xab*xab + yab*yab + zab*zab);
+    if (norm == 0) return;
+    xab /= norm;
+    yab /= norm;
+    zab /= norm;
+
+    //take a third point M different from A and B
+    double xm = 0;
+    double ym = 0;
+    double zm = 0;
+
+    while (p1[0] == xm || p2[0] ==xm) xm++;
+    while (p1[1] == ym || p2[1] ==ym) ym++;
+    while (p1[2] == zm || p2[2] ==zm) zm++;
+
+    //vector AM
+    double xam, yam, zam;
+    //normal vector n = AB^AM
+    double xn, yn, zn;
+
+    // ensure that M is not collinear to AB
+    while (true)
+    {
+        xam = xm-p1[0];
+        yam = ym-p1[1];
+        zam = zm-p1[2];
+
+        norm = sqrt( xam*xam + yam*yam + zam*zam);
+        ASSERT( norm > 0 );
+        xam /= norm;
+        yam /= norm;
+        zam /= norm;
+
+        xn = yab*zam - yam*zab;
+        yn = xam*zab - xab*zam;
+        zn = xab*yam - xam*yab;
+
+        //divide n by its norm
+        norm = sqrt( xn*xn + yn*yn + zn*zn);
+        if (norm > 0) break;
+        xm += .1;
+        ym -= M_PI;
+    }
+
+    ASSERT( norm > 0 );
+    xn /= norm;
+    yn /= norm;
+    zn /= norm;
+
+    //the first point of the base
+    double xf, yf, zf;
+
+    xf = p2[0] + width * xn;
+    yf = p2[1] + width * yn;
+    zf = p2[2] + width * zn;
+
+    //two following points of the base
+    double xb1 = xf;
+    double yb1 = yf;
+    double zb1 = zf;
+    double xb2,yb2, zb2;
+
+    //r = AB^n for the future rotation
+    double xr, yr, zr;
+
+    createNewGroup("triangles", "Cone");
+    for (int i =0; i < nbPoints-1; i ++)
+    {
+        // r = AB^n
+        xr = yab*zn - yn*zab;
+        yr = xn*zab - xab*zn;
+        zr = xab*yn - xn*yab;
+
+        //rotate n by degree
+        xn = cos(radian)*xn + sin(radian)*xr;
+        yn = cos(radian)*yn + sin(radian)*yr;
+        zn = cos(radian)*zn + sin(radian)*zr;
+
+        //divide n by its norm
+        norm = sqrt( xn*xn + yn*yn + zn*zn);
+        if (norm > 0)
+        {
+            xn = xn / norm;
+            yn = yn / norm;
+            zn = zn / norm;
+        }
+
+        // calculate one point with the normal vector at a distance width
+        xb2 = p2[0] + width * xn;
+        yb2 = p2[1] + width * yn;
+        zb2 = p2[2] + width * zn;
+
+        //adding the triangles associated with this point
+        addTriangle(p1,
+                  RealPoint(xb1, yb1, zb1),
+                  RealPoint(xb2, yb2, zb2));
+        addTriangle(p2,
+                  RealPoint(xb1, yb1, zb1),
+                  RealPoint(xb2, yb2, zb2));
+
+        xb1 = xb2;
+        yb1 = yb2;
+        zb1 = zb2;
+    }
+
+    //Last part to close the cone
+    addTriangle(p1,
+          RealPoint(xb1, yb1,zb1),
+          RealPoint(xf, yf, zf));
+    addTriangle(p2,
+          RealPoint(xb1, yb1, zb1),
+          RealPoint(xf, yf, zf));
 }
 
 template<typename Space, typename KSpace>
@@ -374,6 +658,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addCylinder(
     const double width
 )
 {
+
 }
 
  template < typename Space ,typename KSpace >
