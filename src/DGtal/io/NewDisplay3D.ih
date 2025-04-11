@@ -88,6 +88,13 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::NewGroup(
  
 template<typename Space, typename KSpace>
 template<typename TData>
+inline void DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::SetDefaultGroup()
+{
+    SetCurrentGroup(defaultGroup);
+}
+
+template<typename Space, typename KSpace>
+template<typename TData>
 inline void DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::SetCurrentGroup(
     const std::string& group
 )
@@ -113,7 +120,7 @@ inline TData& DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::GetInsertDat
         noGroup.push_back(TData{});
         return noGroup.back();
     }
-    return groups[currentGRoup];
+    return groups[currentGroup];
 }
 
 template<typename Space, typename KSpace>
@@ -138,11 +145,28 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::createNewGroup(
 {
          if (of == "lines")         lines.NewGroup(s);
     else if (of == "quads")         quads.NewGroup(s);
+    else if (of == "prisms")       prisms.NewGroup(s);
     else if (of == "images")       images.NewGroup(s);
     else if (of == "points")       points.NewGroup(s);
     else if (of == "voxels")       voxels.NewGroup(s);
     else if (of == "polygons")   polygons.NewGroup(s);
     else if (of == "triangles") triangles.NewGroup(s); 
+    else { trace.warning() << "Unknown type of group"; };
+}
+
+template<typename Space, typename KSpace>
+inline void DGtal::NewDisplay3D<Space, KSpace>::endGroup(
+    const std::string& of
+)
+{
+         if (of == "lines")         lines.SetDefaultGroup();
+    else if (of == "quads")         quads.SetDefaultGroup();
+    else if (of == "prisms")       prisms.SetDefaultGroup();
+    else if (of == "images")       images.SetDefaultGroup();
+    else if (of == "points")       points.SetDefaultGroup();
+    else if (of == "voxels")       voxels.SetDefaultGroup();
+    else if (of == "polygons")   polygons.SetDefaultGroup();
+    else if (of == "triangles") triangles.SetDefaultGroup();
     else { trace.warning() << "Unknown type of group"; };
 }
 
@@ -471,16 +495,17 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addPrism(
         } 
     };
    
-    createNewGroup("cubes", "Prism");
-    auto& prism = cubes.GetInsertData();
+    createNewGroup("prisms", "Prism");
+    auto& prism = prisms.GetInsertData();
     for (const auto& face : vertices)
         prism.append(face);
 
-    if (cubes.IsDefaultSelected())
+    if (prisms.IsDefaultSelected())
     {
         prism.transform = Eigen::Affine3d::Identity();
         prism.s = currentStyle;
     }
+
 }
 
 template<typename Space, typename KSpace>
@@ -658,10 +683,162 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addCylinder(
     const double width
 )
 {
+    int nbPoints = 6; //the number of point on the base of the cone
+    double degree = 360 / nbPoints; // the angle between two points
+    double radian = degree * M_PI/180.0;
+    double norm; // norm of the vectors
 
+    // A(p1[0],p1[1],p1[2]) and B(p2[0],p2[1],p2[2]) vector AB
+    double xab, yab, zab;
+
+    xab = p2[0]-p1[0];
+    yab = p2[1]-p1[1];
+    zab = p2[2]-p1[2];
+
+    norm = sqrt( xab*xab + yab*yab + zab*zab);
+    assert (norm > 0);
+    xab = xab / norm;
+    yab = yab / norm;
+    zab = zab / norm;
+
+    //take a third point M different from A and B
+    double xm = 0;
+    double ym = 0;
+    double zm = 0;
+
+    while (p1[0] == xm || p2[0] ==xm) xm++;
+    while (p1[1] == ym || p2[1] ==ym) ym++;
+    while (p1[2] == zm || p2[2] ==zm) zm++;
+
+    //vector AM
+    double xam, yam, zam;
+
+    xam = xm-p1[0];
+    yam = ym-p1[1];
+    zam = zm-p1[2];
+
+    norm = sqrt( xam*xam + yam*yam + zam*zam);
+    assert (norm > 0);
+    xam = xam / norm;
+    yam = yam / norm;
+    zam = zam / norm;
+
+    //normal vector n = AB^AM
+    double xn, yn, zn;
+
+    xn = yab*zam - yam*zab;
+    yn = xam*zab - xab*zam;
+    zn = xab*yam - xam*yab;
+
+    //divide n by its norm
+    norm = sqrt( xn*xn + yn*yn + zn*zn);
+    assert (norm > 0);
+    xn = xn / norm;
+    yn = yn / norm;
+    zn = zn / norm;
+
+
+    //the first point of the bases
+    double xbf, ybf, zbf;
+    double xaf, yaf, zaf;
+
+    xbf = p2[0] + width * xn;
+    ybf = p2[1] + width * yn;
+    zbf = p2[2] + width * zn;
+
+    xaf = p1[0] + width * xn;
+    yaf = p1[1] + width * yn;
+    zaf = p1[2] + width * zn;
+
+    //two following points of the bases
+    double xb1 = xbf;
+    double yb1 = ybf;
+    double zb1 = zbf;
+    double xb2,yb2, zb2;
+
+    double xa1 = xaf;
+    double ya1 = yaf;
+    double za1 = zaf;
+    double xa2,ya2, za2;
+
+    //r = AB^n for the future rotation
+    double xr, yr, zr;
+
+    createNewGroup("triangles", "Cylinder");
+    //createNewQuadList("Cylinder");
+    for (int i =0; i < nbPoints-1; i ++)
+    {
+        // r = AB^n
+        xr = yab*zn - yn*zab;
+        yr = xn*zab - xab*zn;
+        zr = xab*yn - xn*yab;
+
+        //rotate n by degree
+        xn = cos(radian)*xn + sin(radian)*xr;
+        yn = cos(radian)*yn + sin(radian)*yr;
+        zn = cos(radian)*zn + sin(radian)*zr;
+
+        //divide n by its norm (used when a bug appear)
+        norm = sqrt( xn*xn + yn*yn + zn*zn);
+        assert (norm > 0);
+        xn = xn / norm;
+        yn = yn / norm;
+        zn = zn / norm;
+
+        // calculate one point with the normal vector at a distance width
+        xb2 = p2[0] + width * xn;
+        yb2 = p2[1] + width * yn;
+        zb2 = p2[2] + width * zn;
+
+        xa2 = p1[0] + width * xn;
+        ya2 = p1[1] + width * yn;
+        za2 = p1[2] + width * zn;
+
+        //adding the triangles and the quad associated with those poins
+        addTriangle(p1,
+                  RealPoint(xa1, ya1, za1),
+                  RealPoint(xa2, ya2, za2));
+        addTriangle(p2,
+                  RealPoint(xb1, yb1, zb1),
+                  RealPoint(xb2, yb2, zb2));
+        addTriangle(
+            RealPoint(xb1, yb1, zb1),     
+            RealPoint(xb2, yb2, zb2),
+            RealPoint(xa2, ya2, za2)
+        );
+        addTriangle(
+            RealPoint(xa2, ya2, za2),
+            RealPoint(xb1, yb1, zb1),     
+            RealPoint(xa1, ya1, za1)
+        );
+
+        xb1 = xb2;
+        yb1 = yb2;
+        zb1 = zb2;
+
+        xa1 = xa2;
+        ya1 = ya2;
+        za1 = za2;
+    }
+
+    //Last part to close the cylinder
+    addTriangle(p1,
+              RealPoint(xa1, ya1, za1),
+              RealPoint(xaf, yaf, zaf));
+    addTriangle(p2,
+              RealPoint(xb1, yb1, zb1),
+              RealPoint(xbf, ybf, zbf));
+    addTriangle(
+        RealPoint(xb1, yb1, zb1),
+        RealPoint(xbf, ybf, zbf),
+        RealPoint(xaf, yaf, zaf));
+    addTriangle(
+        RealPoint(xaf, yaf, zaf), 
+        RealPoint(xb1, yb1, zb1),
+        RealPoint(xa1, ya1, za1));
 }
 
- template < typename Space ,typename KSpace >
+template < typename Space ,typename KSpace >
 inline
 typename DGtal::NewDisplay3D< Space ,KSpace >::RealPoint
 DGtal::NewDisplay3D< Space ,KSpace >::embed( const typename Space::Point & dp ) const
@@ -688,7 +865,6 @@ DGtal::NewDisplay3D< Space ,KSpace >::embedKS( const TransformedPrism & aTrans )
   return mySCellEmbedder->embed(aTrans.mySurfel);
 }
 
-
 template < typename Space ,typename KSpace >
 inline
 typename DGtal::NewDisplay3D< Space ,KSpace >::RealPoint
@@ -698,5 +874,3 @@ DGtal::NewDisplay3D< Space ,KSpace >::embedK( const typename KSpace::Cell & cell
   return myCellEmbedder->embed(cell);
 }
 
-
- 

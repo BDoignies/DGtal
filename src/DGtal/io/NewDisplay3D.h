@@ -52,7 +52,7 @@ namespace DGtal
                 DEFAULT = 1
             };
 
-            DGtal::uint64_t mode = DrawMode::DEFAULT;
+            DGtal::uint64_t mode = static_cast<DGtal::uint64_t>(DrawMode::DEFAULT);
             DGtal::Color color = DGtal::Color::White;
             
             bool backfaceCulling = false;
@@ -132,6 +132,7 @@ namespace DGtal
 
             void NewGroup(const std::string& newGroup);
             void SetCurrentGroup(const std::string& group);
+            void SetDefaultGroup();
             
             /**
              * @brief Retrieves the location to insert new data in
@@ -174,7 +175,9 @@ namespace DGtal
             , points("points_", "points")
             , lines("lines_", "lines") 
             , triangles("triangles_", "triangles")
+            , cones("cones_", "cones")
             , quads("quads_", "quads")
+            , prisms("prism_", "prisms")
             , polygons("polygons_", "polygons")
             , voxels("voxels_", "voxels")
             , images("images_", "images")
@@ -217,6 +220,14 @@ namespace DGtal
          * @param s The new name of the group if empty, use a default new group name
          */
         void createNewGroup(const std::string& of, const std::string& s = "");
+
+        /**
+         * @brief Add a new group of a defined geometric type
+         *
+         * @param of The type of geometric data to create a new list of
+         * @param s The new name of the group if empty, use a default new group name
+         */
+        void endGroup(const std::string& of);
 
         /**
          * Method to add a specific quad (used by @a addClippingPlane or
