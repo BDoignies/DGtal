@@ -47,8 +47,28 @@ namespace DGtal
               typename TKSpace = KhalimskySpaceND<3>>
     class NewPolyscopeViewer3D : public NewDisplay3D<TSpace, TKSpace>
     {
+    public:
+        /**
+         * Add an object to draw list
+         *
+         * @param object The object to draw
+         */
+        template <typename TDrawableWithViewer3D>
+        NewPolyscopeViewer3D<TSpace, TKSpace> & operator<<(const TDrawableWithViewer3D & object);
+
 
     };
 }
 
-// #include "PolyscopeViewer3D.ih"
+namespace DGtal
+{
+    template <typename TSpace, typename TKSpace>
+    template <typename TDrawableWithViewer3D>
+    NewPolyscopeViewer3D<TSpace, TKSpace>& 
+    NewPolyscopeViewer3D<TSpace, TKSpace>::operator<<(const TDrawableWithViewer3D & object)
+    {
+        NewDisplay3DFactory<TSpace, TKSpace>::draw(*this, object);
+        return *this;
+    }
+}
+

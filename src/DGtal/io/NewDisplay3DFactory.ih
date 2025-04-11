@@ -1118,23 +1118,7 @@ void DGtal::NewDisplay3DFactory<Space,KSpace>::drawAsPaving( Display & display,
   if (Space::dimension == 3)
     {
       // Face XY
-      for (auto z = h.myLowerBound[2];   z <= h.myUpperBound[2]; z++)
-        {
-          for (auto x = h.myLowerBound[0]; x <= h.myUpperBound[0]; x++)
-            {
-              for (auto y = h.myLowerBound[1]; y <= h.myUpperBound[1]; y++)
-                {
-                  DGtal::Z3i::RealPoint rp = display.embed( DGtal::Z3i::Point(x, y, z) );
-                  rp[0]+=0.5;
-                  rp[1]+=0.5;
-                  rp[2]+=0.5;
-                  //a transparent color for the paving
-                  display.setFillColor( Color(255, 255 ,255, 15));
-                  display.addCube(rp, 1.0);
-                }
-            }
-        }
-    }
+          }
   display.setFillColor(fillColorSave);
 }
 
@@ -1145,61 +1129,24 @@ inline
 void
 DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display, const DGtal::HyperRectDomain<SpaceDom> & aDomain )
 {
-  std::string mode = display.getMode( aDomain.className() );
+    ASSERT((Space::dimension==3)|| (Space::dimension==2));
+    
+    display.createNewGroup("voxels", "Domain");
 
-  ASSERT((mode=="" || mode=="Grid" || mode=="Paving"|| mode=="PavingPoints"|| mode=="PavingGrids" ||
-          mode=="BoundingBox")||
-         ("DGtal::NewDisplay3DFactory<Space,KSpace>::draw( NewDisplay3DD<Space, KSpace> & display, const DGtal::HyperRectDomain<Space> & aDomain ): Unknown mode "+mode)=="");
-
-  /*
-    if ( mode == "BoundingBox" )
+    for (auto z = aDomain.myLowerBound[2];   z <= aDomain.myUpperBound[2]; z++)
     {
-    display.createNewLineList(aDomain.className());
-    drawAsBoundingBox( display, aDomain );
-    }else if( ( mode == "" ) || (mode == "Grid"))
-    {
-    display.createNewLineList(aDomain.className());
-    drawAsGrid( display, aDomain );
-    }
-    else if ( mode == "Paving" )
-    {
-    display.createNewCubeList( aDomain.className());
-    }
-  */
-
-  ASSERT((Space::dimension==3)|| (Space::dimension==2));
-  ASSERT((Space::dimension!=3) || (mode=="" || mode=="Grid" || mode=="Paving"|| mode=="PavingPoints"|| mode=="PavingGrids" ||
-				   mode=="BoundingBox")||
-         ("DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display, const DGtal::HyperRectDomain<Space> & aDomain ): Unknown mode "+mode)=="");
-  ASSERT((Space::dimension!=2) || (mode=="" || mode=="BoundingBox" || mode=="Grid") ||
-         ("DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display, const DGtal::HyperRectDomain<Space> & aDomain ): Unknown mode "+mode)=="");
-
-  if(Space::dimension == 2)
-    {
-      if (mode=="")
-        mode="BoundingBox";
-    }else if ( mode == "BoundingBox" )
-    {
-      display.createNewLineList(aDomain.className());
-      drawAsBoundingBox( display, aDomain );
-    }else if(( mode == "" ) || (mode == "Grid"))
-    {
-      display.createNewLineList(aDomain.className());
-      drawAsGrid( display, aDomain );
-    } else if ( mode == "Paving" )
-    {
-      display.createNewCubeList();
-      drawAsPaving( display, aDomain );
-    } else if ( mode == "PavingPoints" )
-    {
-      display.createNewBallList(aDomain.className());
-      drawAsPavingBalls( display, aDomain );
-    }else if ( mode == "PavingGrids" )
-    {
-      display.createNewLineList(aDomain.className());
-      display.createNewCubeList( );
-      drawAsGrid( display, aDomain );
-      drawAsPaving( display, aDomain );
+        for (auto x = aDomain.myLowerBound[0]; x <= aDomain.myUpperBound[0]; x++)
+        {
+            for (auto y = aDomain.myLowerBound[1]; y <= aDomain.myUpperBound[1]; y++)
+            {
+                DGtal::Z3i::RealPoint rp = display.embed( DGtal::Z3i::Point(x, y, z) );
+                rp[0] += 0.5;
+                rp[1] += 0.5;
+                rp[2] += 0.5;
+           
+                display.addCube(rp, 1.0);
+            }
+        }
     }
 }
 // HyperRectDomain
@@ -1569,26 +1516,13 @@ inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
 						  const DGtal::PointVector<dim, TComponent, TContainer> & p )
 {
-  DGtal::Color fillColorSave = display.getFillColor();
-  ASSERT(dim == 3);
+    ASSERT(dim == 3);
 
-  std::string mode = display.getMode( p.className() );
-  ASSERT( (mode=="Paving" || mode=="Grid" || mode=="Both" || mode=="PavingWired"|| mode=="") );
-
-  if ( mode == "Paving" || ( mode == "" ) )
-    drawAsPaving( display, p );
-  else if ( mode == "Grid" )
-    drawAsGrid( display, p );
-  else if ( ( mode == "Both" ) )
-    {
-      drawAsPaving( display, p );
-      drawAsGrid( display, p );
-    }
-  else if( mode=="PavingWired")
-    {
-      drawAsPavingWired( display, p );
-    }
-  display.setFillColor(fillColorSave);
+    const DGtal::Z3i::RealPoint rp = display.embed(p);
+    
+    // Set the default group 
+    display.endGroup("voxels"); 
+    display.addCube(rp); 
 }
 
 template <typename Space, typename KSpace>

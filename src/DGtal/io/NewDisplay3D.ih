@@ -19,7 +19,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::DisplayData<TIndices>::Append(
     // Try to automatically fill indices
     if (i.size() != 0)
     {
-        indices.emplace_back(i.begin(), i.end());
+       indices.insert(indices.end(), i.begin(), i.end());
     }
     else
     {
@@ -57,7 +57,7 @@ template<typename TData>
 inline void DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::NewGroup(
     const std::string& newGroup)
 {
-    const std::string& newPrefix = prefix;
+    const std::string* newPrefix = &prefix;
     
     std::string newGroupName = newGroup;
     bool shouldCreateWithPrefix = false;
@@ -69,7 +69,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::NewGroup(
     else if (groups.find(newGroupName) != groups.end())
     {
         shouldCreateWithPrefix = true;
-        newPrefix = newGroup;
+        newPrefix = &newGroup;
     }
 
     if (shouldCreateWithPrefix)
@@ -79,7 +79,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::NewGroup(
         // Safe guard if the user adds a group that would collide with existing name
         do
         {
-            newGroupName = newPrefix + std::to_string(count++);
+            newGroupName = *newPrefix + std::to_string(count++);
         } while(groups.find(newGroupName) != groups.end());
     }
   
@@ -328,7 +328,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addLine(
 template<typename Space, typename KSpace>
 inline void DGtal::NewDisplay3D<Space, KSpace>::addCube(const RealPoint &center, double width)
 {
-    static constexpr RealPoint cubePositions[8] = {
+    static const RealPoint cubePositions[8] = {
         {-1, -1, -1}, 
         { 1, -1, -1},
         { 1,  1, -1},
@@ -349,9 +349,12 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addCube(const RealPoint &center,
         center + 0.5 * width * cubePositions[6], 
         center + 0.5 * width * cubePositions[7] 
     };
+
      
     auto& v = voxels.GetInsertData();
-    v.Append(points);
+
+    // Template substitution fails if directly used
+    v.template Append<const RealPoint>(points);
     
     if (voxels.IsDefaultGroupSelected())
     {

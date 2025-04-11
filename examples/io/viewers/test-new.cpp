@@ -17,10 +17,10 @@ int main(int argc, char** argv)
 
     typedef NewPolyscopeViewer3D<> MyViewer;
     MyViewer viewer;
-    /*
     viewer << domain;
     viewer << p1 << p2 << p3;
 
+    /*
     viewer<< MyViewer::updateDisplay;
     viewer.show(); */
     return 0;

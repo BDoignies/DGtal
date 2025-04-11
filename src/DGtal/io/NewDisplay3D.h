@@ -555,7 +555,7 @@ namespace DGtal
 
         /// Current style to apply   
         Style currentStyle;    
-        
+    public: // TODO 
         // Geometrical data  
         DataGroup<Points> points; 
         DataGroup<Lines> lines;   
