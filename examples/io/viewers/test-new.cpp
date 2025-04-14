@@ -8,18 +8,27 @@ using namespace std;
 using namespace DGtal;
 using namespace Z3i;
 
+#include "DGtal/shapes/Shapes.h"
+typedef NewPolyscopeViewer3D<> MyViewer;
+
 int main(int argc, char** argv)
 {
-    Point p1( 0, 0, 0 );
-    Point p2( 5, 5 ,5 );
-    Point p3( 2, 3, 4 );
-    Domain domain( p1, p2 );
-
-    typedef NewPolyscopeViewer3D<> MyViewer;
     MyViewer viewer;
+
+    Point p1( 0, 0, 0 );
+    Point p2( 10, 10 , 10 );
+    Domain domain( p1, p2 );
     viewer << domain;
-    viewer << p1 << p2 << p3;
-    
+
+    DigitalSet shape_set( domain );
+    Shapes<Domain>::addNorm1Ball( shape_set, Point( 5, 5, 5 ), 2 );
+    Shapes<Domain>::addNorm2Ball( shape_set, Point( 3, 3, 3 ), 2 );
+
+    shape_set.erase(Point(3,3,3));
+    shape_set.erase(Point(6,6,6));
+
+    viewer << shape_set;
+
     /*
     viewer<< MyViewer::updateDisplay; */
     viewer.show(); 

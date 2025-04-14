@@ -49,7 +49,10 @@ namespace DGtal
              */
             enum class DrawMode 
             {
-                DEFAULT = 1
+                DEFAULT = 1,
+                PAVING, 
+                PAVING_TRANSP,
+                GRID, 
             };
 
             DGtal::uint64_t mode = static_cast<DGtal::uint64_t>(DrawMode::DEFAULT);
