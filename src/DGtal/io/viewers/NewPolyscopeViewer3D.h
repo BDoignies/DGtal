@@ -48,6 +48,37 @@ namespace DGtal
     class NewPolyscopeViewer3D : public NewDisplay3D<TSpace, TKSpace>
     {
     public:
+       /**
+        * Default constructor
+        *
+        * Intializes polyscope
+        */
+        NewPolyscopeViewer3D();
+
+        /**
+         * Constructor from Khalimsky space
+         *
+         * Initializes polyscope
+         *
+         * @param emb The khalimsky space
+         */
+        NewPolyscopeViewer3D(const TKSpace& emb);
+
+        // TODO
+        // /**
+        //  * Main function to control the viewer
+        //  *
+        //  * @param key The command
+        //  */
+        // NewPolyscopeViewer3D<TSpace, TKSpace> & operator<<(
+        //     const typename NewPolyscopeViewer3D<TSpace, TKSpace>::StreamKey & key
+        // );
+        
+        /**
+         * Show the viewer and start the event loop. Must be called only once. 
+         */
+        void show() const;
+
         /**
          * Add an object to draw list
          *
@@ -55,8 +86,11 @@ namespace DGtal
          */
         template <typename TDrawableWithViewer3D>
         NewPolyscopeViewer3D<TSpace, TKSpace> & operator<<(const TDrawableWithViewer3D & object);
-
-
+    protected:
+       /** 
+         * Create and register polyscope structures
+         */
+        void createPolyscopeObjects() const;
     };
 }
 
@@ -69,6 +103,115 @@ namespace DGtal
     {
         NewDisplay3DFactory<TSpace, TKSpace>::draw(*this, object);
         return *this;
+    }    
+
+    template <typename TSpace, typename TKSpace>
+    NewPolyscopeViewer3D<TSpace, TKSpace>::NewPolyscopeViewer3D()
+    {
+        polyscope::init();  
+        // polyscope::state::userCallback = [this](){ this->poyscopeCallback(); };
+    }
+    
+    template <typename TSpace, typename TKSpace>
+    NewPolyscopeViewer3D<TSpace, TKSpace>::NewPolyscopeViewer3D(const TKSpace& embd) : NewDisplay3D<TSpace, TKSpace>(embd)
+    {
+        polyscope::init();  
+        // polyscope::state::userCallback = [this](){ this->poyscopeCallback(); };
+    }
+
+    template <typename TSpace, typename TKSpace>
+    void NewPolyscopeViewer3D<TSpace, TKSpace>::show() const
+    {
+        createPolyscopeObjects();
+        polyscope::show();
+    }
+
+    template<typename Data>
+    polyscope::Structure* DrawData(const Data& d, const std::string& name)
+    {
+        const auto& style = d.style;
+        polyscope::Structure* structure = nullptr;
+
+        std::cout << "Regestering mesh: " << name << std::endl;
+        switch(Data::IndicesSize)
+        {
+        case 1: // Point cloud
+            break;
+        case 2: // Lines
+            break;
+        case -1: // Polygonal mesh
+        case  3: // Triangles mesh
+        case  4: // Quads mesh
+            {
+                auto smesh = polyscope::registerSurfaceMesh(
+                        name, 
+                        d.vertices, 
+                        d.indices
+                );
+
+                structure = smesh;
+            }
+            break;
+        case 8: // Voxel grid
+            {
+                auto smesh = polyscope::registerVolumeMesh(
+                        name, 
+                        d.vertices, 
+                        d.indices
+                );
+
+                structure = smesh;
+            }
+            break;
+        default:
+            break;
+        };
+
+        return structure;
+    }
+
+    template<typename Group>
+    void DrawDataGroup(const Group& g, const std::string& name)
+    {
+        // No structure to draw
+        if (g.noGroup.size() + g.groups.size() == 0)
+            return;
+        
+        polyscope::Group* mainGroup = polyscope::createGroup(name);
+
+        if (g.noGroup.size() > 0)
+        {
+            polyscope::Group* singletons = polyscope::createGroup(name + "/Singletons");
+
+            for (size_t i = 0; i < g.noGroup.size(); i++)
+            {
+                std::cout << "Adding : " << i << std::endl;
+                auto* structure = DrawData(g.noGroup.at(i), name + "_" + std::to_string(i));
+                
+                if (structure != nullptr)
+                    structure->addToGroup(*singletons);
+            }
+
+            // Hide infos
+            singletons->setHideDescendantsFromStructureLists(true);
+            singletons->setShowChildDetails(false);
+            mainGroup->addChildGroup(*singletons);
+        }
+        
+        // Add other informations
+        for (const auto& [name, data] : g.groups)
+        {
+            auto* structure = DrawData(data, name);
+
+            if (structure != nullptr)
+                structure->addToGroup(*mainGroup);
+        }
+    }
+
+    template <typename TSpace, typename TKSpace>
+    void NewPolyscopeViewer3D<TSpace, TKSpace>::createPolyscopeObjects() const
+    {
+        DrawDataGroup(this->voxels, "Voxels");
     }
 }
 

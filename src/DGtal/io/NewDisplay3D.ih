@@ -202,7 +202,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addQuadWithNormal(
     if (quads.IsDefaultGroupSelected())
     {
         q.transform = Eigen::Affine3d::Identity();
-        q.s = currentStyle;
+        q.style = currentStyle;
     }
 }
 
@@ -291,7 +291,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addTriangle(
     if (triangles.IsDefaultGroupSelected())
     {
         t.transform = Eigen::Affine3d::Identity();
-        t.s = currentStyle;
+        t.style = currentStyle;
     }
 }
 
@@ -304,7 +304,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addPolygon(const std::vector<Rea
     if (polygons.IsDefaultGroupSelected())
     {
         p.transform = Eigen::Affine3d::Identity();
-        p.s = currentStyle;
+        p.style = currentStyle;
     }
 }
 
@@ -321,7 +321,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addLine(
     if (lines.IsDefaultGroupSelected())
     {
         l.transform = Eigen::Affine3d::Identity();
-        l.s = currentStyle;
+        l.style = currentStyle;
     }
 }
 
@@ -359,7 +359,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addCube(const RealPoint &center,
     if (voxels.IsDefaultGroupSelected())
     {
         v.transform = Eigen::Affine3d::Identity();
-        v.s = currentStyle;
+        v.style = currentStyle;
     }
 }
 
@@ -375,7 +375,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addBall(
     if (center.IsDefaultGroupSelected())
     {
         p.transform = Eigen::Affine3d::Identity();
-        p.s = currentStyle;
+        p.style = currentStyle;
     }
 }
 
@@ -506,7 +506,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addPrism(
     if (prisms.IsDefaultSelected())
     {
         prism.transform = Eigen::Affine3d::Identity();
-        prism.s = currentStyle;
+        prism.style = currentStyle;
     }
 
 }

@@ -70,10 +70,22 @@ namespace DGtal
         template<typename TIndices>
         struct DisplayData
         {
+            // Help to see if we have a constant size array
+            template<typename T>
+            struct __internal_size  { 
+                static constexpr int value = -1;
+            };
+            template<typename T, std::size_t N>
+            struct __internal_size<std::array<T, N>> {
+                static constexpr int value = static_cast<int>(N);
+            };
+
             using Vertices = std::vector<std::array<double, 3>>;
             using Indices = std::vector<TIndices>; 
             
             using ScalarData = std::vector<double>;
+
+            static constexpr int IndicesSize = __internal_size<TIndices>::value;
             
             /**
              * @brief Append data of an other display data 
@@ -94,7 +106,7 @@ namespace DGtal
             Indices indices;
 
             ScalarData scalars;
-            Style s;
+            Style style;
         };
 
         struct ClippingPlane
@@ -102,7 +114,7 @@ namespace DGtal
             RealPoint n; /// Normal of the plane
             RealPoint a; /// Point inside the plane
 
-            Style s;
+            Style style;
         };
 
         using IndexType = uint32_t;
@@ -157,8 +169,8 @@ namespace DGtal
              */
             bool IsDefaultGroupSelected() const;
 
-            std::vector<TData> noGroup;
             std::map<std::string, TData> groups;
+            std::vector<TData> noGroup;
         };
 
     public:

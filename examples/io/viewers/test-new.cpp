@@ -19,9 +19,9 @@ int main(int argc, char** argv)
     MyViewer viewer;
     viewer << domain;
     viewer << p1 << p2 << p3;
-
+    
     /*
-    viewer<< MyViewer::updateDisplay;
-    viewer.show(); */
+    viewer<< MyViewer::updateDisplay; */
+    viewer.show(); 
     return 0;
 }
