@@ -16,6 +16,16 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::DisplayData<TIndices>::Append(
     std::span<double> s
 )
 {
+    const size_t N = vertices.size();
+
+    vertices.resize(vertices.size() + v.size());
+    for (size_t i = 0; i < v.size(); i++)
+    {
+        size_t d = 0;
+        for (auto it = std::begin(v[i]); it != std::end(v[i]); ++it)
+            vertices[N + i][d++] = *it;
+    }
+
     // Try to automatically fill indices
     if (i.size() != 0)
     {
@@ -29,19 +39,12 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::DisplayData<TIndices>::Append(
             container.resize(v.size());
 
         for (size_t i = 0; i < v.size(); i++)
-            container[i] = vertices.size() + i; 
+            container[i] = N + i; 
 
         indices.push_back(std::move(container));
     }
+
     scalars.insert(scalars.end(), s.begin(), s.end());
-    
-    vertices.resize(vertices.size() + v.size());
-    for (size_t i = 0; i < v.size(); i++)
-    {
-        size_t d = 0;
-        for (auto it = std::begin(v[i]); it != std::end(v[i]); ++it)
-            vertices[i][d++] = *it;
-    }
 }
 
 template<typename Space, typename KSpace>
@@ -350,7 +353,6 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addCube(const RealPoint &center,
         center + 0.5 * width * cubePositions[7] 
     };
 
-     
     auto& v = voxels.GetInsertData();
 
     // Template substitution fails if directly used

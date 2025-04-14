@@ -132,7 +132,6 @@ namespace DGtal
         const auto& style = d.style;
         polyscope::Structure* structure = nullptr;
 
-        std::cout << "Regestering mesh: " << name << std::endl;
         switch(Data::IndicesSize)
         {
         case 1: // Point cloud
@@ -185,7 +184,6 @@ namespace DGtal
 
             for (size_t i = 0; i < g.noGroup.size(); i++)
             {
-                std::cout << "Adding : " << i << std::endl;
                 auto* structure = DrawData(g.noGroup.at(i), name + "_" + std::to_string(i));
                 
                 if (structure != nullptr)
@@ -193,8 +191,6 @@ namespace DGtal
             }
 
             // Hide infos
-            singletons->setHideDescendantsFromStructureLists(true);
-            singletons->setShowChildDetails(false);
             mainGroup->addChildGroup(*singletons);
         }
         
