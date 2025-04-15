@@ -319,7 +319,8 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addLine(
 )
 {
     auto& l = lines.GetInsertData();
-    l.Append({ p1, p2 });
+    const std::array<RealPoint, 2> line = { p1, p2 };
+    l.template Append<const RealPoint>(line);
     
     if (lines.IsDefaultGroupSelected())
     {
@@ -330,13 +331,13 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addLine(
 
 template<typename Space, typename KSpace>
 inline void DGtal::NewDisplay3D<Space, KSpace>::addCube(const RealPoint &center, double width)
-{
+{   
     static const RealPoint cubePositions[8] = {
         {-1, -1, -1}, 
         { 1, -1, -1},
         { 1,  1, -1},
         {-1,  1, -1},
-        {-1, -1,  1}, 
+        {-1, -1,  1},
         { 1, -1,  1},
         { 1,  1,  1},
         {-1,  1,  1}
@@ -356,6 +357,8 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addCube(const RealPoint &center,
     auto& v = voxels.GetInsertData();
 
     // Template substitution fails if directly used
+    // as points is const, the type should be const 
+    // RealPoint to disable std::span update operators
     v.template Append<const RealPoint>(points);
     
     if (voxels.IsDefaultGroupSelected())
@@ -372,9 +375,11 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addBall(
     const unsigned int resolution)
 {
     auto& p = points.GetInsertData();
-    p.Append({ center });
-    
-    if (center.IsDefaultGroupSelected())
+
+    const std::array<RealPoint, 1> centers = { center };
+    p.template Append<const RealPoint>(centers);
+   
+    if (points.IsDefaultGroupSelected())
     {
         p.transform = Eigen::Affine3d::Identity();
         p.style = currentStyle;

@@ -137,6 +137,15 @@ namespace DGtal
         case 1: // Point cloud
             break;
         case 2: // Lines
+            {   
+                auto smesh = polyscope::registerCurveNetwork(
+                        name, 
+                        d.vertices, 
+                        d.indices
+                );
+
+                structure = smesh;
+            }
             break;
         case -1: // Polygonal mesh
         case  3: // Triangles mesh
@@ -177,7 +186,6 @@ namespace DGtal
             return;
         
         polyscope::Group* mainGroup = polyscope::createGroup(name);
-
         if (g.noGroup.size() > 0)
         {
             polyscope::Group* singletons = polyscope::createGroup(name + "/Singletons");
@@ -208,6 +216,7 @@ namespace DGtal
     void NewPolyscopeViewer3D<TSpace, TKSpace>::createPolyscopeObjects() const
     {
         DrawDataGroup(this->voxels, "Voxels");
+        DrawDataGroup(this->lines, "Lines");
     }
 }
 

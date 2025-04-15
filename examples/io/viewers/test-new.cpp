@@ -18,7 +18,6 @@ int main(int argc, char** argv)
     Point p2( 10, 10 , 10 );
     Domain domain( p1, p2 );
 
-
     DigitalSet shape_set( domain );
     Shapes<Domain>::addNorm1Ball( shape_set, Point( 5, 5, 5 ), 2 );
     Shapes<Domain>::addNorm2Ball( shape_set, Point( 3, 3, 3 ), 2 );

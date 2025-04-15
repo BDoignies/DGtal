@@ -659,12 +659,22 @@ void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
     typedef typename DGtal::DigitalSetByAssociativeContainer<Domain, Container>::ConstIterator ConstIterator;
     ASSERT(Domain::Space::dimension == 3);
 
+    const bool isGrid = display.currentStyle.mode & (DGtal::uint64_t)Display::Style::DrawMode::GRID;
+
     display.createNewGroup("voxels", "DigitalSet");
+    if (isGrid)
+      display.createNewGroup("points", "Domain");
+
     for ( ConstIterator it = s.begin(); it != s.end(); ++it )
     {
         DGtal::Z3i::RealPoint rp = display.embed((*it) );
         display.addCube(rp);
+        if (isGrid)
+          display.addBall(rp);
     }
+    if (isGrid)
+      display.endGroup("points");
+
     display.endGroup("voxels");
 }
 // DigitalSetByAssociativeContainer
@@ -766,7 +776,11 @@ DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display, const DGtal::
 {
     ASSERT((Space::dimension==3)|| (Space::dimension==2));
     
+    const bool isGrid = display.currentStyle.mode & (DGtal::uint64_t)Display::Style::DrawMode::GRID;
+    
     display.createNewGroup("voxels", "Domain");
+    if (isGrid)
+        display.createNewGroup("points", "Domain");
 
     for (auto z = aDomain.myLowerBound[2];   z <= aDomain.myUpperBound[2]; z++)
     {
@@ -780,9 +794,14 @@ DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display, const DGtal::
                 rp[2] += 0.5;
            
                 display.addCube(rp, 1.0);
+                if (isGrid)
+                    display.addBall(rp);
             }
         }
     }
+
+    if (isGrid)
+        display.endGroup("points", "Domain");
 
     display.endGroup("voxels");
 }
@@ -1059,9 +1078,37 @@ template <typename TDigitalTopology, typename TDigitalSet>
 inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
 						  const DGtal::Object<TDigitalTopology, TDigitalSet> & o )
-{
+{ 
+    typedef typename TDigitalSet::Point Point;
+    typedef typename TDigitalSet::Domain Domain;
+    typedef
+      typename DigitalSetSelector < Domain,
+               SMALL_DS + HIGH_ITER_DS >::Type SmallSet;
+    typedef Object<TDigitalTopology, SmallSet> SmallObject;
 
-  draw(display, o.pointSet());
+    // TODO: See to merge names
+    draw(display, o.pointSet());
+    
+    const bool adjacencies = display.currentStyle.mode & (DGtal::uint64_t)Display::Style::DrawMode::ADJACENCIES;
+
+    if (true || adjacencies)
+    { 
+        display.createNewGroup("lines", "ObjectAdjacencies"); 
+        for (typename TDigitalSet::ConstIterator it = o.pointSet().begin();
+           it != o.pointSet().end();
+           ++it)
+        {
+            //Brute-force scan of the neighborhood.
+            SmallObject neig = o.properNeighborhood(*it);
+            for (typename SmallObject::DigitalSet::ConstIterator it2 = neig.pointSet().begin();
+                 it2 != neig.pointSet().end();
+                 ++it2)
+            { 
+                display.addLine((*it), (*it2));
+            }
+        }
+        display.endGroup("lines");
+    }
 }
 
 
@@ -1329,7 +1376,15 @@ void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
       display << pair.second;
     }
 }
-// IncidentPointsRange
+template <typename Space, typename KSpace>
+inline
+void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
+						  const DGtal::SetMode3D & sm3d )
+{
+  //  if (   display.myModes[ sm3d.myClassname ] != sm3d.myMode )
+  //    display.myModes[ sm3d.myClassname ] = sm3d.myMode;
+}
+
 template< typename Space, typename KSpace>
 inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
@@ -1343,9 +1398,8 @@ template< typename Space, typename KSpace>
 inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display, const DGtal::CustomColors3D & cc3d )
 {
-
-  display.currentStyle.fillColor = cc3d.myFillColor;
-  display.currentStyle.lineColor = cc3d.myPenColor;
+    display.currentStyle.fillColor = cc3d.myFillColor;
+    display.currentStyle.lineColor = cc3d.myPenColor;
 }
 
 
