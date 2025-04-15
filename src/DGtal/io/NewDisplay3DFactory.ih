@@ -631,154 +631,23 @@ void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
     }
 }
 // Naive3DDSSComputer
-
-
-// DigitalSetBySTLSet
-template <typename Space, typename KSpace>
-template<typename Domain, typename Compare>
-inline
-void DGtal::NewDisplay3DFactory<Space,KSpace>::drawAsPavingTransparent( Display & display,
-								     const DGtal::DigitalSetBySTLSet<Domain, Compare> & s )
-{
-  typedef typename Domain::Point Point;
-  typedef typename std::set<Point>::const_iterator ConstIterator;
- 
-  ASSERT(Domain::Space::dimension == 3);
-
-  display.createNewCubeList();
-  for ( ConstIterator it = s.begin();
-        it != s.end();
-        ++it )
-    {
-      DGtal::Z3i::RealPoint rp = display.embed((*it) );
-      display.addCube(rp);
-    }
-}
-
-template <typename Space, typename KSpace>
-template<typename Domain, typename Compare>
-inline
-void DGtal::NewDisplay3DFactory<Space,KSpace>::drawAsPaving( Display & display,
-							  const DGtal::DigitalSetBySTLSet<Domain, Compare> & s )
-{
-  typedef typename DGtal::DigitalSetBySTLSet<Domain, Compare>::ConstIterator ConstIterator;
-
-  ASSERT(Domain::Space::dimension == 3);
-
-  display.createNewCubeList( );
-  for ( ConstIterator it = s.begin();
-        it != s.end();
-        ++it )
-    {
-      DGtal::Z3i::RealPoint rp = display.embed((*it) );
-      display.addCube(rp);
-    }
-}
-
-template <typename Space, typename KSpace>
-template<typename Domain, typename Compare>
-inline
-void DGtal::NewDisplay3DFactory<Space,KSpace>::drawAsGrid( Display & display,
-							const DGtal::DigitalSetBySTLSet<Domain, Compare> & s )
-{
-  typedef typename DGtal::DigitalSetBySTLSet<Domain, Compare>::ConstIterator ConstIterator;
-
-  ASSERT(Domain::Space::dimension == 3);
-
-  for ( ConstIterator it = s.begin();
-        it != s.end();
-        ++it )
-    {
-      DGtal::Z3i::RealPoint rp = display.embed((*it) );
-      display.addBall(rp,1.0/static_cast<double>( POINT_AS_BALL_RADIUS), POINT_AS_BALL_RES);
-    }
-}
-
 template <typename Space, typename KSpace>
 template<typename Domain, typename Compare>
 inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
 						  const DGtal::DigitalSetBySTLSet<Domain, Compare> & s )
 {
-  ASSERT(Domain::Space::dimension == 3);
+    typedef typename DGtal::DigitalSetBySTLSet<Domain, Compare>::ConstIterator ConstIterator;
 
-  std::string mode = display.getMode( s.className() );
-  ASSERT( (mode=="Paving" || mode=="PavingTransp" || mode=="Grid" || mode=="Both" || mode=="") );
+    ASSERT(Domain::Space::dimension == 3);
 
-  if ( mode == "Paving" || ( mode == "" ) )
-    drawAsPaving( display, s );
-  else if ( mode == "PavingTransp" )
-    drawAsPavingTransparent( display, s );
-  else if ( mode == "Grid" )
-    drawAsGrid( display, s );
-  else if ( ( mode == "Both" ) )
+    display.createNewGroup("voxels", "DigitalSet");
+    for (ConstIterator it = s.begin(); it != s.end(); ++it)
     {
-      drawAsPaving( display, s );
-      drawAsGrid( display, s );
+        DGtal::Z3i::RealPoint rp = display.embed((*it) );
+        display.addCube(rp);
     }
-}
-// DigitalSetBySTLSet
-
-
-// DigitalSetByAssociativeContainer
-template <typename Space, typename KSpace>
-template<typename Domain, typename Container>
-inline
-void DGtal::NewDisplay3DFactory<Space,KSpace>::drawAsPavingTransparent( Display & display,
-								     const DGtal::DigitalSetByAssociativeContainer<Domain, Container> & s )
-{
-  typedef typename DGtal::DigitalSetByAssociativeContainer<Domain, Container>::ConstIterator ConstIterator;
-
-  ASSERT(Domain::Space::dimension == 3);
-
-  display.createNewCubeList( );
-  for ( ConstIterator it = s.begin();
-        it != s.end();
-        ++it )
-    {
-      DGtal::Z3i::RealPoint rp = display.embed((*it) );
-      display.addCube(rp);
-    }
-}
-
-template <typename Space, typename KSpace>
-template<typename Domain, typename Container>
-inline
-void DGtal::NewDisplay3DFactory<Space,KSpace>::drawAsPaving( Display & display,
-							  const DGtal::DigitalSetByAssociativeContainer<Domain, Container> & s )
-{
-  typedef typename DGtal::DigitalSetByAssociativeContainer<Domain, Container>::ConstIterator ConstIterator;
-
-  ASSERT(Domain::Space::dimension == 3);
-
-  display.createNewCubeList( );
-  for ( ConstIterator it = s.begin();
-        it != s.end();
-        ++it )
-    {
-      DGtal::Z3i::RealPoint rp = display.embed((*it) );
-      display.addCube(rp);
-    }
-}
-
-template <typename Space, typename KSpace>
-template<typename Domain, typename Container>
-inline
-void DGtal::NewDisplay3DFactory<Space,KSpace>::drawAsGrid( Display & display,
-							const DGtal::DigitalSetByAssociativeContainer<Domain, Container> & s )
-{
-  typedef typename DGtal::DigitalSetByAssociativeContainer<Domain, Container>::ConstIterator ConstIterator;
-
-
-  ASSERT(Domain::Space::dimension == 3);
-
-  for ( ConstIterator it = s.begin();
-        it != s.end();
-        ++it )
-    {
-      DGtal::Z3i::RealPoint rp = display.embed((*it) );
-      display.addBall(rp,1.0/static_cast<double>( POINT_AS_BALL_RADIUS), POINT_AS_BALL_RES);
-    }
+    display.endGroup("voxels");
 }
 
 template <typename Space, typename KSpace>
@@ -786,23 +655,17 @@ template<typename Domain, typename Container>
 inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
 						  const DGtal::DigitalSetByAssociativeContainer<Domain, Container> & s )
-{
-  ASSERT(Domain::Space::dimension == 3);
+{  
+    typedef typename DGtal::DigitalSetByAssociativeContainer<Domain, Container>::ConstIterator ConstIterator;
+    ASSERT(Domain::Space::dimension == 3);
 
-  std::string mode = display.getMode( s.className() );
-  ASSERT( (mode=="Paving" || mode=="PavingTransp" || mode=="Grid" || mode=="Both" || mode=="") );
-
-  if ( mode == "Paving" || ( mode == "" ) )
-    drawAsPaving( display, s );
-  else if ( mode == "PavingTransp" )
-    drawAsPavingTransparent( display, s );
-  else if ( mode == "Grid" )
-    drawAsGrid( display, s );
-  else if ( ( mode == "Both" ) )
+    display.createNewGroup("voxels", "DigitalSet");
+    for ( ConstIterator it = s.begin(); it != s.end(); ++it )
     {
-      drawAsPaving( display, s );
-      drawAsGrid( display, s );
+        DGtal::Z3i::RealPoint rp = display.embed((*it) );
+        display.addCube(rp);
     }
+    display.endGroup("voxels");
 }
 // DigitalSetByAssociativeContainer
 
@@ -920,6 +783,8 @@ DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display, const DGtal::
             }
         }
     }
+
+    display.endGroup("voxels");
 }
 // HyperRectDomain
 
@@ -1163,7 +1028,7 @@ inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::drawWithAdjacencies( Display & display,
 								 const DGtal::Object<TDigitalTopology, TDigitalSet> & o )
 {
-  typedef typename TDigitalSet::Point Point;
+/*  typedef typename TDigitalSet::Point Point;
 
   typedef typename TDigitalSet::Domain Domain;
   typedef
@@ -1186,7 +1051,7 @@ void DGtal::NewDisplay3DFactory<Space,KSpace>::drawWithAdjacencies( Display & di
           p = (*it2) - (*it);
           draw(display, p, (*it));
         }
-    }
+    }*/
 }
 
 template <typename Space, typename KSpace>
@@ -1195,23 +1060,9 @@ inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
 						  const DGtal::Object<TDigitalTopology, TDigitalSet> & o )
 {
-  std::string mode = display.getMode( o.className() );
-  if ( mode == "Basic" || mode == "" )
-    draw( display, o.pointSet() );
-  else if ( mode == "PavingTransp" )
-    {
-      drawAsPavingTransparent( display, o.pointSet() );
 
-    }
-  else if ( mode == "DrawAdjacencies" )
-    {
-      draw( display, o.pointSet() );
-      drawWithAdjacencies( display, o );
-    }
-  else
-    ASSERT(false && (("DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display, const DGtal::Object<TDigitalTopology, TDigitalSet> & o ): Unknown mode " + mode) == ""));
+  draw(display, o.pointSet());
 }
-// Object
 
 
 // PointVector
@@ -1293,7 +1144,6 @@ void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
     const DGtal::Z3i::RealPoint rp = display.embed(p);
     
     // Set the default group 
-    display.endGroup("voxels"); 
     display.addCube(rp); 
 }
 
@@ -1480,31 +1330,22 @@ void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
     }
 }
 // IncidentPointsRange
-
-template <typename Space, typename KSpace>
-inline
-void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
-						  const DGtal::SetMode3D & sm3d )
-{
-  if (   display.myModes[ sm3d.myClassname ] != sm3d.myMode )
-    display.myModes[ sm3d.myClassname ] = sm3d.myMode;
-}
-
 template< typename Space, typename KSpace>
 inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display,
 						  const DGtal::CustomStyle3D & cs3d )
 {
-  if (display.myStyles[ cs3d.myClassname ] != cs3d.myStyle )
-    display.myStyles[ cs3d.myClassname ] = cs3d.myStyle;
-}
+  // if (display.myStyles[ cs3d.myClassname ] != cs3d.myStyle )
+  //     display.myStyles[ cs3d.myClassname ] = cs3d.myStyle;
+} 
 
 template< typename Space, typename KSpace>
 inline
 void DGtal::NewDisplay3DFactory<Space,KSpace>::draw( Display & display, const DGtal::CustomColors3D & cc3d )
 {
-  display.setFillColor(cc3d.myFillColor);
-  display.setLineColor(cc3d.myPenColor);
+
+  display.currentStyle.fillColor = cc3d.myFillColor;
+  display.currentStyle.lineColor = cc3d.myPenColor;
 }
 
 

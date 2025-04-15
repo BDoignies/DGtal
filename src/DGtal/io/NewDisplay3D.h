@@ -49,14 +49,20 @@ namespace DGtal
              */
             enum class DrawMode 
             {
-                DEFAULT = 1,
-                PAVING, 
-                PAVING_TRANSP,
-                GRID, 
+                DEFAULT       = (1 << 1),
+                // Properties that modifies rendering
+                PAVING        = (1 << 2),
+                PAVING_TRANSP = (1 << 3),
+                EDGES         = (1 << 4),
+                // Properties that adds new geometry
+                GRID          = (1 << 5),
+                ADJACENCIES   = (1 << 6)
             };
 
             DGtal::uint64_t mode = static_cast<DGtal::uint64_t>(DrawMode::DEFAULT);
-            DGtal::Color color = DGtal::Color::White;
+
+            DGtal::Color fillColor = DGtal::Color::White;
+            DGtal::Color lineColor = DGtal::Color::Black;
             
             bool backfaceCulling = false;
         };
@@ -505,8 +511,6 @@ namespace DGtal
         template <typename TDrawableWithDisplay3D>
         NewDisplay3D & operator<<( const TDrawableWithDisplay3D & object );
     
-    
-    
         /**
          * Writes/Displays the object on an output stream.
          * @param out the output stream where the object is written.
@@ -557,7 +561,9 @@ namespace DGtal
          * @return the point embeded in real space
          */
         RealPoint embedK( const typename KSpace::Cell & cell ) const;
-
+    public:
+        /// Current style to apply   
+        Style currentStyle;    
     protected:
         /// The Khalimsky space
         KSpace myKSpace;
@@ -568,8 +574,6 @@ namespace DGtal
         /// an embeder from a signed khalimsky space point to a real space point
         SCellEmbedder *mySCellEmbedder;
 
-        /// Current style to apply   
-        Style currentStyle;    
     public: // TODO 
         // Geometrical data  
         DataGroup<Points> points; 
