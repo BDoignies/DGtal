@@ -182,6 +182,8 @@ namespace DGtal
             std::vector<TData> noGroup;
         };
 
+        enum StreamKey { addNewList, updateDisplay, shiftSurfelVisu };
+
     public:
         /**
              * @brief Constructor

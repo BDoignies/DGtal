@@ -3,6 +3,7 @@
 #include "DGtal/io/NewDisplay3D.h"
 #include "DGtal/io/NewDisplay3DFactory.h"
 #include "DGtal/io/viewers/NewPolyscopeViewer3D.h"
+#include "DGtal/geometry/surfaces/COBANaivePlaneComputer.h"
 
 using namespace std;
 using namespace DGtal;
@@ -11,26 +12,102 @@ using namespace Z3i;
 #include "DGtal/shapes/Shapes.h"
 typedef NewPolyscopeViewer3D<> MyViewer;
 
+template <typename Viewer3D, typename Domain, typename Predicate>
+void
+displayPredicate( Viewer3D & viewer,
+                  const Domain & domain, const Predicate & pred )
+{
+  viewer.createNewGroup("voxels", "aDomain");      
+  for ( typename Domain::ConstIterator itB = domain.begin(), itE = domain.end();
+        itB != itE; ++itB )
+    {
+      if ( pred( *itB ) )
+        viewer << *itB;
+    }
+  viewer.endGroup("voxels");      
+}
+
 int main(int argc, char** argv)
 {
     MyViewer viewer;
-    Point p1( 0, 0, 0 );
-    Point p2( 10, 10 , 10 );
-    Domain domain( p1, p2 );
+    trace.beginBlock ( "Testing class COBANaivePlaneComputer" );
 
-    DigitalSet shape_set( domain );
-    Shapes<Domain>::addNorm1Ball( shape_set, Point( 5, 5, 5 ), 2 );
-    Shapes<Domain>::addNorm2Ball( shape_set, Point( 3, 3, 3 ), 2 );
-    viewer <<  CustomColors3D(Color(250, 200,0, 100),Color(250, 200,0, 25));
-    viewer << shape_set;
+    unsigned int nbok = 0;
+    unsigned int nb = 0;
 
-    Object6_18 shape( dt6_18, shape_set );
-    viewer << SetMode3D( shape.className(), "DrawAdjacencies" );
-    viewer << shape;
+    typedef COBANaivePlaneComputer<Z3, BigInteger> PlaneComputer;
+    typedef PlaneComputer::Primitive Primitive;
+    PlaneComputer plane;
 
-    Object18_6 shape2( dt18_6, shape_set );
-    viewer << SetMode3D( shape2.className(), "DrawAdjacencies" );
-    viewer << shape2;
+    plane.init( 2, 100, 1, 1 );
+    Point pt0( 0, 0, 0 );
+    bool pt0_inside = plane.extend( pt0 );
+    trace.info() << "(" << nbok << "/" << nb << ") Plane=" << plane
+               << std::endl;
+    Point pt1( 8, 1, 3 );
+    bool pt1_inside = plane.extend( pt1 );
+    ++nb, nbok += pt1_inside == true ? 1 : 0;
+    trace.info() << "(" << nbok << "/" << nb << ") add " << pt1
+               << " Plane=" << plane << std::endl;
+    Point pt2( 2, 7, 1 );
+    bool pt2_inside = plane.extend( pt2 );
+    ++nb, nbok += pt2_inside == true ? 1 : 0;
+    trace.info() << "(" << nbok << "/" << nb << ") add " << pt2
+               << " Plane=" << plane << std::endl;
+
+    Point pt3( 0, 5, 12 );
+    bool pt3_inside = plane.extend( pt3 );
+    ++nb, nbok += pt3_inside == false ? 1 : 0;
+    trace.info() << "(" << nbok << "/" << nb << ") add " << pt3
+               << " Plane=" << plane << std::endl;
+
+    Point pt4( -5, -5, 10 );
+    bool pt4_inside = plane.extend( pt4 );
+    ++nb, nbok += pt4_inside == false ? 1 : 0;
+    trace.info() << "(" << nbok << "/" << nb << ") add " << pt4
+               << " Plane=" << plane << std::endl;
+
+    Point pt5 = pt0 + pt1 + pt2 + Point( 0, 0, 1 );
+    bool pt5_inside = plane.extend( pt5 );
+    ++nb, nbok += pt5_inside == true ? 1 : 0;
+    trace.info() << "(" << nbok << "/" << nb << ") add " << pt5
+               << " Plane=" << plane << std::endl;
+
+    Point pt6 = Point( 1, 0, 1 );
+    bool pt6_inside = plane.extend( pt6 );
+    ++nb, nbok += pt6_inside == true ? 1 : 0;
+    trace.info() << "(" << nbok << "/" << nb << ") add " << pt5
+               << " Plane=" << plane << std::endl;
+
+    Primitive strip = plane.primitive();
+    trace.info() << "strip=" << strip
+               << " axis=" << strip.mainAxis()
+               << " axiswidth=" << strip.axisWidth()
+               << " diag=" << strip.mainDiagonal()
+               << " diagwidth=" << strip.diagonalWidth()
+               << std::endl;
+    ++nb, nbok += strip.axisWidth() < 1.0 ? 1 : 0;
+    trace.info() << "(" << nbok << "/" << nb << ") axiswidth < 1 "
+               << std::endl;
+    ++nb, nbok += strip.diagonalWidth() < sqrt(3.0) ? 1 : 0;
+    trace.info() << "(" << nbok << "/" << nb << ") axiswidth < sqrt(3) "
+               << std::endl;
+    trace.emphase() << ( nbok == nb ? "Passed." : "Error." ) << endl;
+    trace.endBlock();
+    
+    Color red( 255, 0, 0 );
+    Color green( 0, 255, 0 );
+    Color grey( 200, 200, 200 );
+    Domain domain( Point( -5, -5, -5 ), Point( 12, 12, 12 ) );
+    viewer << ( pt0_inside ? CustomColors3D( green, green ) : CustomColors3D( red, red ) ) << pt0;
+    viewer << ( pt1_inside ? CustomColors3D( green, green ) : CustomColors3D( red, red ) ) << pt1;
+    viewer << ( pt2_inside ? CustomColors3D( green, green ) : CustomColors3D( red, red ) ) << pt2;
+    viewer << ( pt3_inside ? CustomColors3D( green, green ) : CustomColors3D( red, red ) ) << pt3;
+    viewer << ( pt4_inside ? CustomColors3D( green, green ) : CustomColors3D( red, red ) ) << pt4;
+    viewer << ( pt5_inside ? CustomColors3D( green, green ) : CustomColors3D( red, red ) ) << pt5;
+    viewer << ( pt6_inside ? CustomColors3D( green, green ) : CustomColors3D( red, red ) ) << pt6;
+    viewer << CustomColors3D( grey, grey );
+    displayPredicate( viewer, domain, strip );
 
     /*
     viewer<< MyViewer::updateDisplay; */

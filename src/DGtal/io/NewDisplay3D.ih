@@ -52,7 +52,7 @@ template<typename TData>
 inline DGtal::NewDisplay3D<Space, KSpace>::DataGroup<TData>::DataGroup(
     const std::string& prefix, 
     const std::string& defaultGroup) : 
-    prefix(prefix), defaultGroup(defaultGroup)
+    prefix(prefix), defaultGroup(defaultGroup), currentGroup(defaultGroup)
 { }
 
 template<typename Space, typename KSpace>
@@ -289,7 +289,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addTriangle(
 )
 {
     auto& t = triangles.GetInsertData();
-    t.Append({ p1, p2, p3 });
+    t.template Append<const RealPoint>(std::array<RealPoint, 3>{ p1, p2, p3 });
     
     if (triangles.IsDefaultGroupSelected())
     {
@@ -332,7 +332,7 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addLine(
 template<typename Space, typename KSpace>
 inline void DGtal::NewDisplay3D<Space, KSpace>::addCube(const RealPoint &center, double width)
 {   
-    static const RealPoint cubePositions[8] = {
+    static const RealPoint cubePositions[8] = { 
         {-1, -1, -1}, 
         { 1, -1, -1},
         { 1,  1, -1},
@@ -394,7 +394,6 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addPrism(
 )
 { 
     const double myCurrentfShiftVisuPrisms = 1.;
-    updateBoundingBox(baseQuadCenter);
     double retract = 0.05*(sizeShiftFactor+myCurrentfShiftVisuPrisms);
     double width   = 0.03*(sizeShiftFactor+myCurrentfShiftVisuPrisms);
 
@@ -467,37 +466,37 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addPrism(
     }
 
     const std::array<std::array<RealPoint, 4>, 6> vertices = {
-        { 
+        std::array<RealPoint, 4>{ 
             RealPoint{ x1, y1, z1 }, 
             RealPoint{ x2, y2, z2 },
             RealPoint{ x3, y3, z3 }, 
             RealPoint{ x4, y4, z4 }
         },
-        { 
+        std::array<RealPoint, 4>{ 
             RealPoint{ x5, y5, z5 }, 
             RealPoint{ x8, y8, z8 },
             RealPoint{ x7, y7, z7 }, 
             RealPoint{ x6, y6, z6 }
         },
-        { 
+        std::array<RealPoint, 4>{ 
             RealPoint{ x1, y1, z1 }, 
             RealPoint{ x5, y5, z5 }, 
             RealPoint{ x6, y6, z6 },
             RealPoint{ x2, y2, z2 }
         },
-        { 
+        std::array<RealPoint, 4>{ 
             RealPoint{ x2, y2, z2 },
             RealPoint{ x6, y6, z6 },
             RealPoint{ x7, y7, z7 }, 
             RealPoint{ x3, y3, z3 }
         },
-        { 
+        std::array<RealPoint, 4>{ 
             RealPoint{ x3, y3, z3 }, 
             RealPoint{ x7, y7, z7 }, 
             RealPoint{ x8, y8, z8 },
             RealPoint{ x4, y4, z4 }
         }, 
-        { 
+        std::array<RealPoint, 4>{ 
             RealPoint{ x4, y4, z4 },
             RealPoint{ x8, y8, z8 },
             RealPoint{ x5, y5, z5 }, 
@@ -505,12 +504,11 @@ inline void DGtal::NewDisplay3D<Space, KSpace>::addPrism(
         } 
     };
    
-    createNewGroup("prisms", "Prism");
     auto& prism = prisms.GetInsertData();
     for (const auto& face : vertices)
-        prism.append(face);
+        prism.template Append<const RealPoint>(face);
 
-    if (prisms.IsDefaultSelected())
+    if (prisms.IsDefaultGroupSelected())
     {
         prism.transform = Eigen::Affine3d::Identity();
         prism.style = currentStyle;

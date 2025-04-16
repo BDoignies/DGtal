@@ -616,10 +616,8 @@ DGtal::Display3D< Space ,KSpace >::addPrism(const RealPoint &baseQuadCenter,
                                             double sizeShiftFactor,
                                             double sizeFactor, bool isSigned, bool aSign)
 {
-  updateBoundingBox(baseQuadCenter);
   double retract = 0.05*(sizeShiftFactor+myCurrentfShiftVisuPrisms);
   double width   = 0.03*(sizeShiftFactor+myCurrentfShiftVisuPrisms);
-
 
   double x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
   double x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8;
