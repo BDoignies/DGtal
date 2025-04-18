@@ -62,6 +62,7 @@
 #include "DGtal/kernel/CanonicEmbedder.h"
 #include "DGtal/helpers/StdDefs.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
+#include "DGtal/io/Display3DData.h"
 #include "DGtal/kernel/CSpace.h"
 
 
@@ -135,176 +136,10 @@ namespace DGtal
       DGtal::int32_t    min;
       DGtal::int32_t    max;
     };
-
-    /**
-     * Common data to most graphical structures used in Display3D.
-     */
-    struct CommonD3D {
-      DGtal::Color   color; ///< Color used for displaying the graphical structure 
-      DGtal::int32_t name;  ///< The "OpenGL name" associated with the graphical structure, used for selecting it (-1 is none).
-
-    protected:
-      ~CommonD3D() = default; ///< Protected destructor to disallow polymorphism.
-    };
-
-    /**
-     * The graphical structure that represents a 3D line segment in Display3D.
-     */
-    struct LineD3D : public CommonD3D {
-      RealPoint point1;
-      RealPoint point2;
-      double width;
-      bool isSigned;
-      bool signPos;
-    };
-
-    /**
-     * The graphical structure that represents a 3D cube in Display3D.
-     */
-    struct CubeD3D : public CommonD3D {
-      /// The center coordinate of the cube.
-      RealPoint center;
-      /// The width of a cube face
-      double width;
-    };
-
-    /**
-     * The graphical structure that represents a clipping plane (it
-     * uses the quadD3D structure)
-     *
-     * @see Display3D, Viewer3D, Board3DTo2D, quadD3D
-     */
-    struct ClippingPlaneD3D : public CommonD3D {
-      double a,b,c,d;
-    };
-
-
-    /**
-     * The graphical structure that represents a quadrilateral in the
-     * space. It is used to display clipping planes and the components
-     * of the myPrismList (allowing to set normal and color).
-     *
-     * @see Display3D, Viewer3D, Board3DTo2D
-     */
-    struct QuadD3D : public CommonD3D {
-      RealPoint point1;
-      RealPoint point2;
-      RealPoint point3;
-      RealPoint point4;
-      double nx, ny, nz;
-    };
-
-
-
-    /**
-     * The graphical structure that represents a triangle in the space.
-     *
-     * @see Display3D, Viewer3D, Board3DTo2D
-     */
-    struct TriangleD3D : public CommonD3D {
-      RealPoint point1;
-      RealPoint point2;
-      RealPoint point3;
-      double nx, ny, nz;
-    };
-    
-    /**
-     * Information to display an image into the scene
-     * 
-     * It can handle both 2D and 3D images, but both 
-     * are rendered as voxel grids. 
-     *
-     * @see Display3D
-     */
-    struct ImageD3D : public CommonD3D {
-        /// Transform
-        Eigen::Affine3d transform;
-        /// Width of each pixel
-        float voxelWidth = 1.d;
-        
-        /// Data of the image
-        std::vector<float> data;
-        /// Size of the image
-        std::array<size_t, 3> dims;
-
-        ImageD3D(); 
-        
-        /** 
-         * Modify the image data from an arbitrary image and a functor
-         *
-         * @tparam TImage The image type
-         * @tparam TFunctor The functor type
-         *
-         * @param img The image
-         * @param func The functor
-         */
-        template<typename TImage, typename TFunctor>
-        void setData(const TImage& img, const TFunctor& func);
-       
-        // TODO: As external function
-        /**
-         *  Convert a direction into a rotation
-         *
-         *  @param axis The principal direction
-         */
-        Eigen::AngleAxisd directionToRotation(ImageDirection axis) const; 
-        ~ImageD3D(); 
-    };
-
-
 public:
-
-
-
-    /// Structure used to display point in 3D
-    /// @see addBall
-    ///
-    //have to be public because of external functions
-    struct BallD3D : public CommonD3D
-    {
-      static const typename RealPoint::Dimension dimension = RealPoint::dimension;
-      const double & operator[]( unsigned int i ) const
-      {
-        assert(i<3);
-        return center[i];
-      };
-      double & operator[]( unsigned int i )
-      {
-        assert(i<3);
-        return center[i];
-      };
-      RealPoint center;
-      bool isSigned;
-      bool signPos;
-      double radius;
-      unsigned int resolution;
-    };
-
-
-    /**
-     * This structure is used to display polygonal faces in 3d.
-     * @see Display3D, Viewer3D, Board3DTo2D
-     **/
-    struct PolygonD3D : public CommonD3D
-    {
-      std::vector<RealPoint> vertices;
-      double nx, ny, nz;
-      DGtal::Color color;
-    };
-
-
     enum StreamKey {addNewList, updateDisplay, shiftSurfelVisu};
 
-
-  public:
-    /// The type that maps identifier name -> vector of QuadD3D.
-    typedef std::map<DGtal::int32_t, std::vector< QuadD3D > > QuadsMap;
-    
-    /// The type that maps identifier name -> vector of CubeD3D.
-    typedef std::map<DGtal::int32_t, std::vector< CubeD3D > > CubesMap;
-
-
-  protected:
+protected:
     /// The Khalimsky space
     KSpace myKSpace;
     /// an embeder from a dgtal space point to a real space point
@@ -342,8 +177,6 @@ public:
       , myCellEmbedder( new CellEmbedder( myKSpace ) )
       , mySCellEmbedder( new SCellEmbedder( myKSpace )  )
       , myBoundingPtEmptyTag( true )
-      , myCurrentFillColor( 220, 220, 220 )
-      , myCurrentLineColor( 22, 22, 222, 50 )
     {
     }
     
@@ -495,7 +328,7 @@ public:
      * (useful to use transparency between different objects).
      * @param s name of the new list
      **/
-    void createNewLineList(std::string s= "");
+    std::string createNewLineList(std::string s= "");
 
 
     /**
@@ -503,7 +336,7 @@ public:
      * (useful to use transparency between different objects).
      * @param s name of the new list
      **/
-    void createNewBallList(std::string s= "");
+    std::string createNewBallList(std::string s= "");
 
 
     /**
@@ -511,8 +344,7 @@ public:
      * (useful to use transparency between different objects).
      * @return the new key of the map associated to the new list.
      **/
-
-    DGtal::int32_t createNewCubeList();
+    std::string createNewCubeList();
 
     
     /**
@@ -521,14 +353,14 @@ public:
      * @return true if the list was found and removed.
      *
      **/
-    bool deleteCubeList(const DGtal::int32_t name);
+    bool deleteCubeList(const std::string& name);
 
      /**
       * Used to create a new list containing new 3D objects
       * (useful to use transparency between different objects).
       * @return the new key of the map associated to the new list.
       **/
-    DGtal::int32_t createNewQuadList();
+    std::string createNewQuadList();
 
 
     /**
@@ -537,21 +369,21 @@ public:
      * @return true if the list was found and removed.
      *
      **/
-    bool deleteQuadList(const DGtal::int32_t name);
+    bool deleteQuadList(const std::string& name);
 
     /**
      * Used to create a new list containing new 3D objects
      * (useful to use transparency between different objects).
      * @param s name of the new list
      **/
-    void createNewTriangleList(std::string s= "");
+    std::string createNewTriangleList(std::string s= "");
 
     /**
      * Used to create a new list containing new 3D objects
      * (useful to use transparency between different objects).
      * @param s name of the new list
      **/
-    void createNewPolygonList(std::string s= "");
+    std::string createNewPolygonList(std::string s= "");
 
 
     /**
@@ -910,84 +742,50 @@ public:
     double myBoundingPtLow [3];
 
   protected:
-    //the current fill color of the display
-    DGtal::Color myCurrentFillColor;
-    //the current line color of the display
-    DGtal::Color myCurrentLineColor;
-
+    Style myCurrentStyle;
     /// Used to specialized visualisation with KSpace surfels/cubes.
     ///
     double myCurrentfShiftVisuPrisms;
 
-    /// Used to represent all the list of line primitive
-    ///
-    std::vector< std::vector<LineD3D> > myLineSetList;
-
-    /// Used to represent all the list of point primitive
-    ///
-    std::vector< std::vector<BallD3D> > myBallSetList;
-
+    /// Represents all the images drawn in the Display3D
+    std::vector<ImageD3D> myImageSetList;
+  
     /// Represent all the clipping planes added to the scene (of maxSize=5).
     ///
     std::vector< ClippingPlaneD3D > myClippingPlaneList;
 
+    using Index = DGtal::int64_t;
+    using Points     = DisplayData<Space, std::array<Index, 1>>;
+    using Lines      = DisplayData<Space, std::array<Index, 2>>;
+    using Triangles  = DisplayData<Space, std::array<Index, 3>>;
+    using Quads      = DisplayData<Space, std::array<Index, 4>>;
+    using Voxels     = DisplayData<Space, std::array<Index, 8>>;
+    using Polygons   = DisplayData<Space, std::vector<Index>>;
+
+
+    /// Used to represent all the list of line primitive
+    DataGroup<Lines> myLineSetList;
+
+    /// Used to represent all the list of point primitive
+    DataGroup<Points> myBallSetList;
+
     /// Represent truncated prism object to represent surfels of Khalimsky space (used to display Khalimsky Space Cell)
-    ///
-    std::vector< QuadD3D > myPrismList;
+    DataGroup<Quads> myPrismList;
 
     /// Represents all the planes drawn in the Display3D or to display
-    /// Khalimsky Space Cell.  The map int --> vector< QuadD3D>
-    /// associates a vector of quads to an integer identifier
-    /// (OpenGL name)
-    QuadsMap myQuadsMap;
+    /// Khalimsky Space Cell.  
+    DataGroup<Quads> myQuadsMap;
 
     /// Represents all the triangles drawn in the Display3D
-    std::vector<std::vector< TriangleD3D > > myTriangleSetList;
+    DataGroup<Triangles> myTriangleSetList;
 
     /// Represents all the polygon drawn in the Display3D
-    std::vector<std::vector<PolygonD3D> > myPolygonSetList;
+    DataGroup<Polys> myPolygonSetList;
 
-    /// Represents all the images drawn in the Display3D
-    std::vector<ImageD3D> myImageSetList;
-
-    /// Represents all the cubes drawn in the Display3D.  The map int
-    /// --> vector<CubeD3D> associates  a vector of cubes to an
-    /// integer identifier (OpenGL name)
-    CubesMap myCubesMap;
-
-    /// names of the lists in myCubeSetList
-    ///
-    std::vector<std::string> myCubeSetNameList;
-
-    /// names of the lists in myLineSetList
-    ///
-    std::vector<std::string> myLineSetNameList;
-
-    /// names of the lists in myBallSetList
-    ///
-    std::vector<std::string> myBallSetNameList;
-    /// names of the lists in myClippingPlaneList
-    ///
-    std::vector<std::string> myClippingPlaneNameList;
-
-    /// names of the lists in myPrismList
-    ///
-    std::vector<std::string> myPrismNameList;
-
-    /// names of the lists in myQuadList
-    ///
-    std::vector<std::string> myQuadSetNameList;
-
-    /// names of the lists in myTriangleList
-    ///
-    std::vector<std::string> myTriangleSetNameList;
-
-    /// names of the lists in myPolygonList
-    ///
-    std::vector<std::string> myPolygonSetNameList;
+    /// Represents all the cubes drawn in the Display3D.
+    DataGroup<Voxels> myCubesMap;
 
     /// the "OpenGL name", used for instance by QGLViewer for selecting objects.
-    ///
     DGtal::int32_t myName3d;
 
     /// Stores the callback functions called when selecting a graphical object.

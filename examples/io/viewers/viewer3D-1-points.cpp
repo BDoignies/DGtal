@@ -53,7 +53,6 @@ using namespace Z3i;
 
 int main( int argc, char** argv )
 {
-
  Point p1( 0, 0, 0 );
  Point p2( 5, 5 ,5 );
  Point p3( 2, 3, 4 );

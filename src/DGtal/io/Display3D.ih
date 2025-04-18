@@ -140,7 +140,7 @@ inline
 void
 DGtal::Display3D< Space ,KSpace >::setFillColor(DGtal::Color aColor)
 {
-  myCurrentFillColor=aColor;
+    currentStyle.color = aColor;
 }
 
 template < typename Space ,typename KSpace >
@@ -148,7 +148,7 @@ inline
 void
 DGtal::Display3D< Space ,KSpace >::setFillTransparency(unsigned char alpha)
 {
-  myCurrentFillColor.alpha(alpha);
+     currentStyle.color.alpha(alpha);
 }
 
 template < typename Space ,typename KSpace >
@@ -156,7 +156,7 @@ inline
 void
 DGtal::Display3D< Space ,KSpace >::setLineColor(DGtal::Color aColor)
 {
-  myCurrentLineColor=aColor;
+    currentStyle.color = aColor;
 }
 
 
@@ -176,7 +176,7 @@ inline
 DGtal::Color
 DGtal::Display3D< Space ,KSpace >::getLineColor()
 {
-  return myCurrentLineColor;
+   return currentSyle.color;
 }
 
 template < typename Space ,typename KSpace >
@@ -184,7 +184,7 @@ inline
 DGtal::Color
 DGtal::Display3D< Space ,KSpace >::getFillColor()
 {
-  return myCurrentFillColor;
+    return currentStyle.color;
 }
 
 //-----------------------------------------------------------------------------
@@ -194,7 +194,7 @@ void
 DGtal::Display3D< Space ,KSpace >::
 setName3d( DGtal::int32_t name )
 {
-  myName3d = name;
+   myName3d = name;
 }
 
 //-----------------------------------------------------------------------------
@@ -204,7 +204,7 @@ DGtal::int32_t
 DGtal::Display3D< Space ,KSpace >::
 name3d() const
 { 
-  return myName3d;
+    return myName3d;
 }
 //-----------------------------------------------------------------------------
 template < typename Space ,typename KSpace >
@@ -269,6 +269,7 @@ DGtal::Display3D< Space ,KSpace >::createNewCubeList()
      found = (myCubesMap.count(aKey) == 0) &&
              (myQuadsMap.count(aKey) == 0); 
    }while (!found && aKey < std::numeric_limits<DGtal::int32_t>::max());
+
    if (found){
      myName3d = aKey;
      return aKey;
