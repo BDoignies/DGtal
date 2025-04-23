@@ -44,6 +44,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include "DGtal/base/BasicTypes.h"
 #include "DGtal/kernel/domains/CDomain.h"
 #include "DGtal/base/Common.h"
 #include "DGtal/base/CountedPtr.h"
@@ -148,10 +149,6 @@ protected:
     CellEmbedder *myCellEmbedder;
     /// an embeder from a signed khalimsky space point to a real space point
     SCellEmbedder *mySCellEmbedder;
-
-
-
-
     //----end of private data
 
     // ----------------------- Standard services ------------------------------
@@ -342,9 +339,12 @@ protected:
     /**
      * Used to create a new list containing new 3D objects
      * (useful to use transparency between different objects).
+     *
+     * @param s Name for the group
+     *
      * @return the new key of the map associated to the new list.
      **/
-    std::string createNewCubeList();
+    std::string createNewCubeList(std::string s = "");
 
     
     /**
@@ -353,14 +353,16 @@ protected:
      * @return true if the list was found and removed.
      *
      **/
-    bool deleteCubeList(const std::string& name);
+    bool deleteCubeList(std::string name);
 
      /**
       * Used to create a new list containing new 3D objects
       * (useful to use transparency between different objects).
+      * @param s The name of the list
+      *
       * @return the new key of the map associated to the new list.
       **/
-    std::string createNewQuadList();
+    std::string createNewQuadList(std::string s = "");
 
 
     /**
@@ -369,7 +371,7 @@ protected:
      * @return true if the list was found and removed.
      *
      **/
-    bool deleteQuadList(const std::string& name);
+    bool deleteQuadList(std::string name);
 
     /**
      * Used to create a new list containing new 3D objects
@@ -768,7 +770,7 @@ protected:
 
     /// Used to represent all the list of point primitive
     DataGroup<Points> myBallSetList;
-
+  
     /// Represent truncated prism object to represent surfels of Khalimsky space (used to display Khalimsky Space Cell)
     DataGroup<Quads> myPrismList;
 
@@ -780,10 +782,10 @@ protected:
     DataGroup<Triangles> myTriangleSetList;
 
     /// Represents all the polygon drawn in the Display3D
-    DataGroup<Polys> myPolygonSetList;
-
     /// Represents all the cubes drawn in the Display3D.
+    DataGroup<Polygons> myPolygonSetList;
     DataGroup<Voxels> myCubesMap;
+
 
     /// the "OpenGL name", used for instance by QGLViewer for selecting objects.
     DGtal::int32_t myName3d;
