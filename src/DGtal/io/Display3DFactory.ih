@@ -1151,7 +1151,7 @@ DGtal::Display3DFactory<Space,KSpace>::draw( Display & display, const DGtal::Hyp
           mode=="BoundingBox")||
          ("DGtal::Display3DFactory<Space,KSpace>::draw( Display3DD<Space, KSpace> & display, const DGtal::HyperRectDomain<Space> & aDomain ): Unknown mode "+mode)=="");
 
-  /*
+/*
     if ( mode == "BoundingBox" )
     {
     display.createNewLineList(aDomain.className());

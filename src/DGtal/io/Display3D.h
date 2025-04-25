@@ -174,6 +174,13 @@ protected:
       , myCellEmbedder( new CellEmbedder( myKSpace ) )
       , mySCellEmbedder( new SCellEmbedder( myKSpace )  )
       , myBoundingPtEmptyTag( true )
+      , myLineSetList("Lines")
+      , myBallSetList("Points")
+      , myPrismList("Prisms")
+      , myQuadsMap("Quads")
+      , myTriangleSetList("Triangles")
+      , myPolygonSetList("Polygones")
+      , myCubesMap("Voxels")
     {
     }
     

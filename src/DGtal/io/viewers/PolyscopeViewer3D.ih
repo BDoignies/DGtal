@@ -6,10 +6,16 @@
  *
  * This file is part of the DGtal library.
  */
-
+#define DEFAULT_SINGLE_STRUCTURE
 
 namespace DGtal
-{
+{   
+    // Wether elements in default group are rendered as 
+    // separate elements or batched together
+    inline constexpr static bool SEPARATE_DEFAULT_GROUP = true;
+    // For performances issues, force group the singletons
+    inline constexpr static size_t SINGLETONS_THRESHOLD = 128;
+
     template <typename TSpace, typename TKSpace>
     PolyscopeViewer3D<TSpace, TKSpace>::PolyscopeViewer3D()
     {
@@ -73,43 +79,21 @@ namespace DGtal
                 polyscope::pick::pickAtScreenCoords(screenCoords);
 
             // Selection
+            std::string name = "";
             if (pickPair.first != nullptr)
             {
-                DGtal::int32_t idx = -1;
-
-                const std::string name = pickPair.first->getName();
-                auto it = namesMap.find(name);
-                if (it != namesMap.end())
-                {
-                    // Index of a subelement
-                    auto itIdx1 = it->second.indexMap.find(pickPair.second);
-                    if (itIdx1 == it->second.indexMap.end())
+                name = pickPair.first->getName();
+                for (auto& callback : this->mySelectCallBackFcts)
+                {                        
+                    if (callback.fct && callback.isSelected(0))
                     {
-                        // Index of the global structure
-                        auto itIdx2 = it->second.indexMap.find(-1);
-                        if (itIdx2 != it->second.indexMap.end())
-                        {
-                            idx = itIdx2->second;
-                        }
-                    }
-                    else
-                    {
-                        idx = itIdx1->second;
-                    }
-
-
-                    for (auto& callback : this->mySelectCallBackFcts)
-                    {                        
-                        if (callback.fct && callback.isSelected(idx))
-                        {
-                            callback.fct(this, idx, callback.data);
-                        }
+                        callback.fct(this, 0, callback.data);
                     }
                 }
-
-                if (extension.get())
-                    extension->OnSelect(this, pickPair.first, pickPair.second, idx);
             }
+
+            if (extension.get())
+                extension->OnSelect(this, pickPair.first, pickPair.second, 0);
         }
     }
     
@@ -150,8 +134,6 @@ namespace DGtal
     PolyscopeViewer3D<TSpace, TKSpace>& 
     PolyscopeViewer3D<TSpace, TKSpace>::operator<<(const SetName3D& name)
     {
-        IndexMapper mapper = { true, { {-1, name.name } }};
-        namesMap[name.strName] = mapper;
         Display3DFactory<TSpace, TKSpace>::draw(*this, name);
         return *this;
     }
@@ -160,20 +142,6 @@ namespace DGtal
     void PolyscopeViewer3D<TSpace, TKSpace>::clearAll()
     {
         polyscope::removeAllStructures();
-
-        // First filter all values that were not specified by the user
-        std::erase_if(namesMap, 
-            [](const auto& pair) { return !pair.second.userSpecified; }
-        );
-
-        // For the one remaining, remove all content except the one 
-        // that was specified
-        for (auto it = namesMap.begin(); it != namesMap.end(); ++it)
-        {
-            std::erase_if(it->second.indexMap, 
-                [](const auto& pair) { return pair.first != -1; }
-            );
-        }
     }
 
 
@@ -191,7 +159,7 @@ namespace DGtal
         std::cout << "Polygones: " << this->myPolygonSetList.size() << std::endl;    // Ok
         std::cout << "CubesMap: "  << this->myCubesMap.size() << std::endl;          // Ok
         std::cout << "Images: " << this->myImageSetList.size() << std::endl;
-
+        
         registerLines();
         registerBalls();
         registerQuads();
@@ -207,403 +175,310 @@ namespace DGtal
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::addClippingPlane(double a, double b, double c, double d, bool drawPlane)
     {
-        typename Display3D<TSpace, TKSpace>::ClippingPlaneD3D cp;
+        ClippingPlaneD3D cp;
         cp.a = a; cp.b = b; cp.c = c; cp.d = d;
-        cp.color = DGtal::Color(0, 0, 0, 128);
+        cp.style = this->myCurrentStyle;
+        cp.style.color = DGtal::Color(0, 0, 0, 128);
 
         this->myClippingPlaneList.push_back(cp);
     }
     
+    template<typename Group, typename Register, typename ApplyStyle>
+    inline void registerGroup(
+        const Group& g, 
+        Register registerGeometry, 
+        ApplyStyle applyStyle
+    ) { 
+        for (const auto& [name, data] : g.groups) {
+            const bool split_group = 
+                (name == g.defaultGroupName) 
+                && SINGLETONS_THRESHOLD < data.elementIndices.size()
+                && SEPARATE_DEFAULT_GROUP;
+
+            if (split_group) {
+                // Default group, separate them into individual elements
+                for (size_t i = 0; i < data.elementIndices.size(); ++i) {
+                    std::cout << i << std::endl;
+                    // Assume they are contiguous
+                    std::span<const typename decltype(data)::Point> vertices {
+                        data.vertices.begin() + data.elementIndices[i][0], 
+                        data.elementIndices[i].size()
+                    };
+                    std::array<typename decltype(data)::Indices, 1> indices = {
+                        data.elementIndices[i]
+                    };
+                    for (size_t j = 0; j < indices[0].size(); j++) indices[0][j] = j;
+                    
+                    auto* surface = registerGeometry(name + "_" + std::to_string(i), vertices, indices);
+                    applyStyle(surface, data, i, 1);
+                }
+            } else {
+                auto* surface = registerGeometry(name, data.vertices, data.elementIndices);
+                applyStyle(surface, data, 0, data.elementIndices.size());
+            }
+        }
+    }
+
+    inline glm::vec3 glmColor(const DGtal::Color& col) {
+        return { col.r(), col.g(), col.b() };
+    }
 
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::registerCubeMaps() const
     {
-        static constexpr int cubePositions[8][3] = {
-            {-1, -1, -1}, 
-            { 1, -1, -1},
-            { 1,  1, -1},
-            {-1,  1, -1},
-            {-1, -1,  1}, 
-            { 1, -1,  1},
-            { 1,  1,  1},
-            {-1,  1,  1}
-        };
+        registerGroup(
+            this->myCubesMap, 
+            // Register function
+            [](const std::string& name, const auto& vertices, const auto& indices) { 
+                return polyscope::registerHexMesh(name, vertices, indices); 
+            }, 
+            // Applies the style
+            [](polyscope::VolumeMesh* mesh, const auto& data, size_t i, size_t c) { 
+                if (data.style.color.has_value()) {
+                    mesh->setColor(glmColor(*data.style.color));
+                    mesh->setTransparency(data.style.color->a());
+                } 
 
-        unsigned int count = 0;
-        for (const auto& [id, cubes] : this->myCubesMap)
-        {
-            if (cubes.size() == 0) continue;
-
-            const std::string& default_name = "cubes_" + std::to_string(count++);
-
-            std::vector<std::array<double     , 3>> vertices(cubes.size() * 8);
-            std::vector<std::array<double     , 3>> colors  (cubes.size());
-            std::vector<std::array<std::size_t, 8>> indices (cubes.size());
-            std::map<DGtal::int32_t, DGtal::int32_t> indexToName;
-
-            for (unsigned int i = 0; i < cubes.size(); i++)
-            {
-                for (unsigned int v = 0; v < 8; v++)
-                {
-                    indices[i][v] = i * 8 + v;
-                    for (unsigned int k = 0; k < 3; k++)
-                    {
-                        vertices[i * 8 + v][k] = 
-                            cubes[i].center[k] + cubePositions[v][k] * cubes[i].width;
-                    }
-
-                    if (cubes[i].name != -1)
-                        indexToName[i] = cubes[i].name;
+                for (const auto& [name, vals] : data.scalarQuantities) {
+                    std::span<const double> values { vals.data() + i, c };
+                    mesh->addCellScalarQuantity(name, values);
                 }
-
-                colors[i][0] = cubes[i].color.r();
-                colors[i][1] = cubes[i].color.g();
-                colors[i][2] = cubes[i].color.b();
+                for (const auto& [name, vals] : data.vectorQuantities) {
+                    // vals = const std::vector<Vector>&
+                    // 
+                    std::span<const typename std::remove_cvref_t<decltype(data)>::Vector> values { vals.data() + i, c };
+                    mesh->addCellVectorQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.colorQuantities) {
+                    std::vector<glm::vec3> colors(c);
+                    for (size_t j = 0; j < c; ++j) {
+                        colors[j] = glmColor(vals[i + j]);
+                    }
+                    mesh->addCellColorQuantity(name, colors);
+                }
             }
-
-            std::string name;
-            auto it = std::find_if(namesMap.begin(), namesMap.end(), 
-                [&](const auto& pair) 
-                { 
-                    auto it = pair.second.indexMap.find(-1);
-                    if (it == pair.second.indexMap.end()) return false;
-                    return it->second == id; 
-                });
-            if (it == namesMap.end() || it->first.empty())
-            {
-                indexToName[-1] = id;
-                namesMap[default_name] = { false, indexToName};
-                name = default_name;
-            }
-            else
-            {
-                name = it->first;
-                it->second.indexMap.insert(indexToName.begin(), indexToName.end());
-            }
-
-            auto volume = polyscope::registerVolumeMesh(name, vertices, indices);
-            volume->setColor({ 1, 1, 1 }); // White color so that no color is missinterpreted
-            volume->setTransparency(cubes[0].color.a());
-            volume->addCellColorQuantity("Colors", colors)->setEnabled(true);
-        }
+        );
     }
     
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::registerTriangles() const
     {
-        // Assumes that this is a convex polygon (with coplanar vertices)
-
-        unsigned int count = 0;
-        for (unsigned int id = 0; id < this->myTriangleSetList.size(); id++)
-        {
-            const auto& triangles = this->myTriangleSetList[id];
-            if (triangles.size() == 0) continue;
-
-            std::string default_name = this->myTriangleSetNameList[id];
-            if (default_name.empty()) 
-                default_name = "polygons_" + std::to_string(count++);
-            else if (namesMap.find(default_name) != namesMap.end())
-                default_name += "_" + std::to_string(count++);            
-
-            std::vector<std::array<double     , 3>> vertices(triangles.size() * 3);
-            std::vector<std::array<double     , 3>> colors  (triangles.size());
-            std::vector<std::array<std::size_t, 3>> indices (triangles.size());
-            std::map<DGtal::int32_t, DGtal::int32_t> indexToName;
-
-            for (unsigned int i = 0; i < triangles.size(); i++)
-            {
-                for (unsigned int k = 0; k < 3; k++)
-                {
-                    vertices[i * 3 + 0][k] = triangles[i].point1[k];
-                    vertices[i * 3 + 1][k] = triangles[i].point2[k];
-                    vertices[i * 3 + 2][k] = triangles[i].point3[k];
+        registerGroup(
+            this->myTriangleSetList, 
+            [](const std::string& name, const auto& vertices, const auto& indices) { 
+                return polyscope::registerSurfaceMesh(name, vertices, indices); 
+            }, 
+            // Applies the style
+            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c) { 
+                if (data.style.color.has_value()) {
+                    surf->setSurfaceColor(glmColor(*data.style.color));
+                    surf->setTransparency(data.style.color->a());
+                } 
+                if (data.style.drawBackFace) {
+                    surf->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
                 }
 
-                indices[i] = {i * 3 + 0, i * 3 + 1, i * 3 + 2};
-                colors[i][0] = colors[i * 2 + 1][0] = triangles[i].color.r();
-                colors[i][1] = colors[i * 2 + 1][1] = triangles[i].color.g();
-                colors[i][2] = colors[i * 2 + 1][2] = triangles[i].color.b();
-
-                if (triangles[i].name != -1)
-                    indexToName[i] = triangles[i].name;
+                for (const auto& [name, vals] : data.scalarQuantities) {
+                    std::span<const double> values { vals.data() + i, c };
+                    surf->addFaceScalarQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.vectorQuantities) {
+                    std::span<const typename std::remove_cvref_t<decltype(data)>::Vector> values { vals.data() + i, c };
+                    surf->addFaceVectorQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.colorQuantities) {
+                    std::vector<glm::vec3> colors(c);
+                    for (size_t j = 0; j < c; ++j) {
+                        colors[j] = glmColor(vals[i + j]);
+                    }
+                    surf->addFaceColorQuantity(name, colors);
+                }
             }
-
-            indexToName[-1] = -1;
-            namesMap[default_name] = { false, indexToName };
-
-
-            auto ppolygons = polyscope::registerSurfaceMesh(default_name, vertices, indices);
-            ppolygons->setTransparency(triangles[0].color.a());
-            ppolygons->addFaceColorQuantity("Colors", colors)->setEnabled(true);
-            // Draw triangle in both directions to avoid computing the proper 
-            // orientation from the normal
-            ppolygons->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
-        }
+        ); 
     }
 
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::registerPolygons() const
     {
-        unsigned int count = 0;
-
-        for (unsigned int id = 0; id < this->myPolygonSetList.size(); id++)
-        {
-            const auto& polygons = this->myPolygonSetList[id];
-            if (polygons.size() == 0) continue;
-
-            uint32_t triangle_count = 0;
-            for (unsigned int i = 0; i < polygons.size(); i++)
-                triangle_count += polygons[i].vertices.size();
-            
-            std::string default_name = this->myPolygonSetNameList[id];
-            if (default_name.empty()) 
-                default_name = "polygons_" + std::to_string(count++);
-            else if (namesMap.find(default_name) != namesMap.end())
-                default_name += "_" + std::to_string(count++);
-
-            std::vector<std::array<double     , 3>> vertices(triangle_count + polygons.size());
-            std::vector<std::array<double     , 3>> colors  (polygons.size());
-            std::vector<std::vector<size_t>>        indices (polygons.size());
-            std::map<DGtal::int32_t, DGtal::int32_t> indexToName;
-
-            unsigned int vindex = 0;
-            for (unsigned int i = 0; i < polygons.size(); i++)
-            {
-                const size_t pSize = polygons[i].vertices.size();
-                std::vector<size_t> subIndices(pSize);
-
-                for (unsigned int j = 0; j < pSize; j++)
-                {
-                    subIndices[j] = vindex + j;
-                    for (unsigned int k = 0; k < 3; k++)
-                    {
-                        vertices[vindex + j][k] = polygons[i].vertices[j][k];
-                    } 
+        registerGroup( 
+            this->myPolygonSetList, 
+            [](const std::string& name, const auto& vertices, const auto& indices) { 
+                return polyscope::registerSurfaceMesh(name, vertices, indices); 
+            }, 
+            // Applies the style
+            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c) { 
+                if (data.style.color.has_value()) {
+                    surf->setSurfaceColor(glmColor(*data.style.color));
+                    surf->setTransparency(data.style.color->a());
+                }  
+                if (data.style.drawBackFace) {
+                    surf->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
                 }
 
-                vindex += pSize;
-                indices[i] = subIndices;
-                
-                colors [i][0] = polygons[i].color.r();
-                colors [i][1] = polygons[i].color.g();
-                colors [i][2] = polygons[i].color.b();
-            
-                if (polygons[i].name != -1)
-                    indexToName[i] = polygons[i].name;
+                for (const auto& [name, vals] : data.scalarQuantities) {
+                    std::span<const double> values { vals.data() + i, c };
+                    surf->addFaceScalarQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.vectorQuantities) {
+                    std::span<const typename std::remove_cvref_t<decltype(data)>::Vector> values { vals.data() + i, c };
+                    surf->addFaceVectorQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.colorQuantities) {
+                    std::vector<glm::vec3> colors(c);
+                    for (size_t j = 0; j < c; ++j) {
+                        colors[j] = glmColor(vals[i + j]);
+                    }
+                    surf->addFaceColorQuantity(name, colors);
+                }
             }
-
-            indexToName[-1] = -1;
-            namesMap[default_name] = { false, indexToName };
-
-            auto ppolygons = polyscope::registerSurfaceMesh(default_name, vertices, indices);
-            ppolygons->setTransparency(polygons[0].color.a());
-            ppolygons->addFaceColorQuantity("Colors", colors)->setEnabled(true);
-            // Draw triangle in both directions to avoid computing the proper 
-            // order from the normal
-            ppolygons->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
-        }
+        ); 
     }
 
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::registerLines() const
     {
-        unsigned int count = 0;
+        registerGroup( 
+            this->myLineSetList, 
+            [](const std::string& name, const auto& vertices, const auto& indices) { 
+                return polyscope::registerCurveNetwork(name, vertices, indices); 
+            }, 
+            // Applies the style
+            [](polyscope::CurveNetwork* lines, const auto& data, size_t i, size_t c) { 
+                if (data.style.color.has_value()) {
+                    lines->setColor(glmColor(*data.style.color));
+                    lines->setTransparency(data.style.color->a());
+                } 
 
-        for (unsigned int id = 0; id < this->myLineSetList.size(); id++)
-        {
-            const auto& lines = this->myLineSetList[id];
-            if (lines.size() == 0) continue;
-
-            std::string default_name = this->myLineSetNameList[id];
-            if (default_name.empty()) 
-                default_name = "lines_" + std::to_string(count++);
-            else if (namesMap.find(default_name) != namesMap.end())
-                default_name += "_" + std::to_string(count++);
-  
-            std::vector<std::array<double     , 3>> vertices(lines.size() * 2);
-            std::vector<std::array<double     , 3>> colors  (lines.size());
-            std::vector<std::array<std::size_t, 2>> indices (lines.size());
-            std::map<DGtal::int32_t, DGtal::int32_t> indexToName;
-
-            for (unsigned int i = 0; i < lines.size(); i++)
-            {
-                indices[i][0] = i * 2 + 0;
-                indices[i][1] = i * 2 + 1;
-                for (unsigned int k = 0; k < 3; k++)
-                {
-                    vertices[i * 2 + 0][k] = lines[i].point1[k]; 
-                    vertices[i * 2 + 1][k] = lines[i].point2[k]; 
+                for (const auto& [name, vals] : data.scalarQuantities) {
+                    std::span<const double> values { vals.data() + i, c };
+                    lines->addEdgeScalarQuantity(name, values);
                 }
-
-                colors[i][0] = lines[i].color.r();
-                colors[i][1] = lines[i].color.g();
-                colors[i][2] = lines[i].color.b();
-
-                if (lines[i].name != -1)
-                    indexToName[i] = lines[i].name;
+                for (const auto& [name, vals] : data.vectorQuantities) {
+                    std::span<const typename std::remove_cvref_t<decltype(data)>::Vector> values { vals.data() + i, c };
+                    lines->addEdgeVectorQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.colorQuantities) {
+                    std::vector<glm::vec3> colors(c);
+                    for (size_t j = 0; j < c; ++j) {
+                        colors[j] = glmColor(vals[i + j]);
+                    }
+                    lines->addEdgeColorQuantity(name, colors);
+                }
             }
-
-            indexToName[-1] = -1;
-            namesMap[default_name] = { false, indexToName};
-
-            auto plines = polyscope::registerCurveNetwork(default_name, vertices, indices);
-            plines->setColor({ 1, 1, 1 }); // White color so that no color is missinterpreted
-            plines->setTransparency(lines[0].color.a());
-            plines->addEdgeColorQuantity("Colors", colors)->setEnabled(true);
-        }
+        ); 
     }
 
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::registerBalls() const
     {
-        static constexpr double DEFAULT_RADIUS_TO_POLYSCOPE_RATIO = 0.1;
+        registerGroup( 
+            this->myBallSetList, 
+            [](const std::string& name, const auto& vertices, const auto& indices) { 
+                return polyscope::registerPointCloud(name, vertices); 
+            }, 
+            // Applies the style
+            [](polyscope::PointCloud* points, const auto& data, size_t i, size_t c) { 
+                if (data.style.color.has_value()) {
+                    points->setPointColor(glmColor(*data.style.color));
+                    points->setTransparency(data.style.color->a());
+                } 
 
-        unsigned int count = 0;
-        for (unsigned int id = 0; id < this->myBallSetList.size(); id++)
-        {
-            const auto& balls = this->myBallSetList[id];
-            if (balls.size() == 0) continue;
+                if (c > data.style.ballToQuadThreshold) {
+                    points->setPointRenderMode(polyscope::PointRenderMode::Quad);
+                }
 
-            std::string default_name = this->myBallSetNameList[id];
-            if (default_name.empty()) 
-                default_name = "polygons_" + std::to_string(count++);
-            else if (namesMap.find(default_name) != namesMap.end())
-                default_name += "_" + std::to_string(count++);
-            
-            std::vector<std::array<double, 3>> points(balls.size());
-            std::vector<std::array<double, 3>> colors(balls.size());
-            std::map<DGtal::int32_t, DGtal::int32_t> indexToName;
-
-            for (unsigned int i = 0; i < balls.size(); i++)
-            {
-                points[i][0] = balls[i].center[0];
-                points[i][1] = balls[i].center[1];
-                points[i][2] = balls[i].center[2];
-
-                colors[i][0] = balls[i].color.r();
-                colors[i][1] = balls[i].color.g();
-                colors[i][2] = balls[i].color.b();
-
-                if (balls[i].name != -1)
-                    indexToName[i] = balls[i].name;
+                for (const auto& [name, vals] : data.scalarQuantities) {
+                    std::span<const double> values { vals.data() + i, c };
+                    points->addScalarQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.vectorQuantities) {
+                    std::span<const typename std::remove_cvref_t<decltype(data)>::Vector> values { vals.data() + i, c };
+                    points->addVectorQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.colorQuantities) {
+                    std::vector<glm::vec3> colors(c);
+                    for (size_t j = 0; j < c; ++j) {
+                        colors[j] = glmColor(vals[i + j]);
+                    }
+                    points->addColorQuantity(name, colors);
+                }
             }
-            
-            indexToName[-1] = -1;
-            namesMap[default_name] = { false, indexToName};
-
-            auto cloud = polyscope::registerPointCloud(default_name, points);
-            cloud->setPointColor({ 1, 1, 1 }); // White color so that no color is missinterpreted
-            cloud->setPointRadius(balls[0].radius * DEFAULT_RADIUS_TO_POLYSCOPE_RATIO);
-            cloud->setTransparency(balls[0].color.a());
-            cloud->addColorQuantity("Colors", colors)->setEnabled(true);
-        }
+        ); 
     }
 
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::registerQuads() const
     {
-        unsigned int count = 0;
-        for (const auto& [id, quads] : this->myQuadsMap)
-        {
-            if (quads.size() == 0) continue;
-
-            const std::string& default_name = "quads_" + std::to_string(count++);
-            std::vector<std::array<double,      3>> points (quads.size() * 4);
-            std::vector<std::array<std::size_t, 4>> indices(quads.size());
-            std::vector<std::array<double,      3>> colors (quads.size());
-            std::map<DGtal::int32_t, DGtal::int32_t> indexToName;
-
-            for (unsigned int i = 0; i < quads.size(); i++)
-            {
-                for (unsigned int k = 0; k < 3; k++)
-                {
-                    points[i * 4 + 0][k] = quads[i].point1[k];
-                    points[i * 4 + 1][k] = quads[i].point2[k];
-                    points[i * 4 + 2][k] = quads[i].point3[k];
-                    points[i * 4 + 3][k] = quads[i].point4[k];
+        registerGroup(
+            this->myQuadsMap, 
+            [](const std::string& name, const auto& vertices, const auto& indices) { 
+                return polyscope::registerSurfaceMesh(name, vertices, indices); 
+            }, 
+            // Applies the style
+            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c) { 
+                if (data.style.color.has_value()) {
+                    surf->setSurfaceColor(glmColor(*data.style.color));
+                    surf->setTransparency(data.style.color->a());
+                }
+                if (data.style.drawBackFace) {
+                    surf->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
                 }
 
-                indices[i] = {i * 4 + 0, i * 4 + 1, i * 4 + 2, i * 4 + 3};
-
-                colors[i][0] = quads[i].color.r();
-                colors[i][1] = quads[i].color.g();
-                colors[i][2] = quads[i].color.b();
-
-                if (quads[i].name != -1)
-                    indexToName[i] = quads[i].name;
+                for (const auto& [name, vals] : data.scalarQuantities) {
+                    std::span<const double> values { vals.data() + i, c };
+                    surf->addFaceScalarQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.vectorQuantities) {
+                    std::span<const typename std::remove_cvref_t<decltype(data)>::Vector> values { vals.data() + i, c };
+                    surf->addFaceVectorQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.colorQuantities) {
+                    std::vector<glm::vec3> colors(c);
+                    for (size_t j = 0; j < c; ++j) {
+                        colors[j] = glmColor(vals[i + j]);
+                    }
+                    surf->addFaceColorQuantity(name, colors);
+                }
             }
-
-            std::string name;
-            auto it = std::find_if(namesMap.begin(), namesMap.end(), 
-                [&](const auto& pair) 
-                { 
-                    auto it = pair.second.indexMap.find(-1);
-                    if (it == pair.second.indexMap.end()) return false;
-                    return it->second == id; 
-                });
-            if (it == namesMap.end() || it->first.empty())
-            {
-                indexToName[-1] = id;
-                namesMap[default_name] = { false, indexToName};
-                name = default_name;
-            }
-            else
-            {
-                name = it->first;
-                it->second.indexMap.insert(indexToName.begin(), indexToName.end());
-            }
-
-            auto mesh = polyscope::registerSurfaceMesh(name, points, indices);
-            mesh->setTransparency(quads[0].color.a());
-            mesh->addFaceColorQuantity("Colors", colors)->setEnabled(true);
-            // Draw triangle in both directions to avoid computing the proper 
-            // orientation from the normal
-            mesh->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
-        }
+        ); 
     }
     
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::registerPrisms() const
     {
-        return ;
-        unsigned int count = 0;
-        for (unsigned int id = 0; id < this->myPrismList.size(); ++id)
-        {
-            const auto& quad = this->myPrismList[id];
-            std::string default_name = "";
+        registerGroup(
+            this->myPrismList, 
+            [](const std::string& name, const auto& vertices, const auto& indices) { 
+                return polyscope::registerSurfaceMesh(name, vertices, indices); 
+            }, 
+            // Applies the style
+            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c) { 
+                if (data.style.color.has_value()) {
+                    surf->setSurfaceColor(glmColor(*data.style.color));
+                    surf->setTransparency(data.style.color->a());
+                } 
+                if (data.style.drawBackFace) {
+                    surf->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
+                }
 
-            if (id < this->myPrismNameList.size())
-                default_name = this->myPrismNameList[id];
-
-            if (default_name.empty()) 
-                default_name = "prism_" + std::to_string(count++);
-            else if (namesMap.find(default_name) != namesMap.end())
-                default_name += "_" + std::to_string(count++);
-            
-            std::cout << "Prism name: " << default_name;
-            std::vector<std::array<double, 3>> points = {
-                { quad.point1[0], quad.point1[1], quad.point1[2] },  
-                { quad.point2[0], quad.point2[1], quad.point2[2] },  
-                { quad.point3[0], quad.point3[1], quad.point3[2] },  
-                { quad.point4[0], quad.point4[1], quad.point4[2] }  
-            };
-            std::vector<std::array<std::size_t, 4>> indices = {
-                { 0, 1, 2, 3 }
-            };
-            std::vector<std::array<double, 3>> colors = {
-                { quad.color.r(), quad.color.g(), quad.color.b() }
-            };
-           
-            std::map<DGtal::int32_t, DGtal::int32_t> idxMap = {{-1, -1}};
-            namesMap[default_name] = {false, idxMap}; 
-            auto mesh = polyscope::registerSurfaceMesh(default_name, points, indices);
-            mesh->setTransparency(quad.color.a());
-            mesh->addFaceColorQuantity("Colors", colors)->setEnabled(true);
-            // Draw triangle in both directions to avoid computing the proper 
-            // orientation from the normal
-            mesh->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
-        }
-    }
+                for (const auto& [name, vals] : data.scalarQuantities) {
+                    std::span<const double> values { vals.data() + i, c };
+                    surf->addFaceScalarQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.vectorQuantities) {
+                    std::span<const typename std::remove_cvref_t<decltype(data)>::Vector> values { vals.data() + i, c };
+                    surf->addFaceVectorQuantity(name, values);
+                }
+                for (const auto& [name, vals] : data.colorQuantities) {
+                    std::vector<glm::vec3> colors(c);
+                    for (size_t j = 0; j < c; ++j) {
+                        colors[j] = glmColor(vals[i + j]);
+                    }
+                    surf->addFaceColorQuantity(name, colors);
+                }
+            }
+        ); 
+   }
 
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::registerClippingPlanes() const
@@ -623,8 +498,12 @@ namespace DGtal
             plane->setDrawWidget(false);
 
             plane->setPose(point, normal);
-            plane->setColor({ cplane.color.r(), cplane.color.g(), cplane.color.b() });
-            plane->setTransparency(cplane.color.a());
+
+            const auto color = cplane.style.color;
+            if (color.has_value()) {
+                plane->setColor({ color->r(), color->g(), color->b() });
+                plane->setTransparency(color->a());
+            }
         }
     }
 
@@ -636,11 +515,7 @@ namespace DGtal
         {
             const auto& image = this->myImageSetList[id];
 
-            std::string default_name;
-            if (default_name.empty()) 
-                default_name = "image_" + std::to_string(count++);
-            else if (namesMap.find(default_name) != namesMap.end())
-                default_name += "_" + std::to_string(count++);
+            std::string default_name = "Image_" + std::to_string(count++);
             
             glm::uvec3 dims = {image.dims[0], image.dims[1], image.dims[2]};
             glm::vec3 bound_low  = { 0, 0, 0};

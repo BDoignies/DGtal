@@ -262,23 +262,6 @@ namespace DGtal
         DGtal::CountedPtr<Extension> extension;
         /// Queue of messages to be displayed
         std::vector<std::string> messageQueue;
-
-        // Necessary to bind callback to appropriate data
-        // Names are unique but not indices, hence we can't use a bimap..
-    
-        /**
-         * Maps structure index to DGtal name
-         */
-        struct IndexMapper
-        {
-            // Track if user has specified the name or if it was
-            // implictely given. 
-            bool userSpecified = false;
-            // Map
-            std::map<DGtal::int32_t, DGtal::int32_t> indexMap;
-        };
-        /// Mapping from polyscope names to DGtal names
-        mutable std::map<std::string, IndexMapper> namesMap;
     };  
 
     template <typename TSpace, typename TKSpace>

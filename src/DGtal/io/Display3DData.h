@@ -39,9 +39,7 @@ namespace DGtal {
     };
 
     struct Style {
-        DGtal::Color color = DGtal::Color::White; // Color of the element
-        double size = 1.; // Size of the elements. May be width of cube, 
-                     // line or radius of ball
+        std::optional<DGtal::Color> color; // Color of the element
         unsigned int ballToQuadThreshold = 4 * 1024; // Threshold to render
                                                      // a quad instead of spheres
         bool drawBackFace = true; // If backfaces should be drawn
@@ -52,6 +50,7 @@ namespace DGtal {
         using Point = typename Space::RealPoint;
         using Vertex = Point;
         using Vector = Vertex;
+        using Indices = TIndices;
         using T = typename Point::Component;
 
         inline static constexpr bool VARIABLE_FACE_SIZE = utils::is_vector<TIndices>::value;
@@ -68,7 +67,7 @@ namespace DGtal {
 
         void Append(std::span<const Vertex> vertices, const Color& col) {
             Append(vertices);
-            colors[DEFAULT_COLOR_NAME].push_back(col);
+            colorQuantities[DEFAULT_COLOR_NAME].push_back(col);
         }
 
         void Append(std::span<const Vertex> v) {
@@ -91,7 +90,7 @@ namespace DGtal {
         // Values associated at each face
         std::map<std::string, std::vector<T>> scalarQuantities;
         std::map<std::string, std::vector<Vector>> vectorQuantities;
-        std::map<std::string, std::vector<DGtal::Color>> colors;
+        std::map<std::string, std::vector<DGtal::Color>> colorQuantities;
     };
     
     template<typename TData>
@@ -99,7 +98,7 @@ namespace DGtal {
         using Data = TData;
 
         DataGroup(const std::string& dName): 
-            defaultGroupName(dName + "_{i}"), 
+            defaultGroupName(dName), 
             currentGroup(dName), 
             isDefault(true)
         { } 
@@ -116,11 +115,13 @@ namespace DGtal {
 
         std::string newGroup(const std::string& name, const Style& s) { 
             static const std::string TOKEN = "{i}";
-
+            
             std::string newGroup = name;
-            size_t tokenPos = newGroup.find(TOKEN);  
+            if (newGroup.empty())
+                newGroup = defaultGroupName + "_{i}";
 
-            if (tokenPos == std::string::npos) {
+            size_t tokenPos = newGroup.find(TOKEN);  
+            if (tokenPos != std::string::npos) {
                 size_t i = 0;
                 do {
                     newGroup = newGroup.replace(tokenPos, tokenPos + TOKEN.size(), std::to_string(i++));
@@ -129,7 +130,7 @@ namespace DGtal {
             else {
                 size_t i = 0;
                 while (groups.find(newGroup) != groups.end()) {
-                    newGroup = name + "_" + std::to_string(i++);
+                    newGroup = newGroup + "_" + std::to_string(i++);
                 }
             }
 
@@ -138,7 +139,7 @@ namespace DGtal {
 
             if (!isDefault)
                 groups[currentGroup].style = s;
- 
+
             return currentGroup;
         }
 
@@ -173,7 +174,8 @@ namespace DGtal {
     };
 
     struct ClippingPlaneD3D {
-          double a,b,c,d;
+        Style style;
+        double a,b,c,d;
     };
 
     /**

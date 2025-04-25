@@ -59,7 +59,7 @@ inline
 void
 DGtal::Display3D< Space ,KSpace >::setFillColor(DGtal::Color aColor)
 {
-    myCurrentStyle.color = aColor;
+    *myCurrentStyle.color = aColor;
 }
 
 template < typename Space ,typename KSpace >
@@ -67,7 +67,7 @@ inline
 void
 DGtal::Display3D< Space ,KSpace >::setFillTransparency(unsigned char alpha)
 {
-     myCurrentStyle.color.alpha(alpha);
+     myCurrentStyle.color->alpha(alpha);
 }
 
 template < typename Space ,typename KSpace >
@@ -75,7 +75,7 @@ inline
 void
 DGtal::Display3D< Space ,KSpace >::setLineColor(DGtal::Color aColor)
 {
-    myCurrentStyle.color = aColor;
+    *myCurrentStyle.color = aColor;
 }
 
 
@@ -95,7 +95,7 @@ inline
 DGtal::Color
 DGtal::Display3D< Space ,KSpace >::getLineColor()
 {
-   return myCurrentStyle.color;
+   return *myCurrentStyle.color;
 }
 
 template < typename Space ,typename KSpace >
@@ -103,7 +103,7 @@ inline
 DGtal::Color
 DGtal::Display3D< Space ,KSpace >::getFillColor()
 {
-    return myCurrentStyle.color;
+    return *myCurrentStyle.color;
 }
 
 //-----------------------------------------------------------------------------
@@ -273,7 +273,7 @@ DGtal::Display3D< Space ,KSpace >::addCube(const RealPoint &center, double width
         center + 0.5 * width * cubePositions[7] 
     };
 
-    myCubesMap.Append(points, myCurrentStyle.color);
+    myCubesMap.Append(points, *myCurrentStyle.color);
 }
 
 
@@ -290,7 +290,7 @@ DGtal::Display3D< Space ,KSpace >::addBall(const RealPoint &center,
     const std::array<RealPoint, 1> points = {
         center
     };
-    myBallSetList.Append(points, myCurrentStyle.color);
+    myBallSetList.Append(points, *myCurrentStyle.color);
 }
 
 
@@ -307,7 +307,7 @@ DGtal::Display3D< Space ,KSpace >::addLine(const RealPoint &p1, const RealPoint 
     const std::array<RealPoint, 2> points = {
         p1, p2
     };
-    myLineSetList.Append(points, myCurrentStyle.color);
+    myLineSetList.Append(points, *myCurrentStyle.color);
 }
 
 template < typename Space ,typename KSpace >
@@ -342,15 +342,18 @@ DGtal::Display3D< Space ,KSpace >::addQuadWithNormal(const RealPoint &p1, const 
     const RealPoint u = p2 - p1;
     const RealPoint v = p3 - p2;
     const RealPoint cp = crossProduct(u, v);
-    const auto scal = dot(cp, n);
+    const auto scal = dotProduct(cp, n);
 
+    auto pp2 = p2;
+    auto pp4 = p4;
+    
     if (enableReorientation && (scal < 0.))
-      std::swap(p4, p2);
+      std::swap(pp4, pp2);
     
     const std::array<RealPoint, 4> points = {
-      p1, p2, p3, p4
+      p1, pp2, p3, pp4
     };
-    myQuadsMap.Append(points, myCurrentStyle.color);
+    myQuadsMap.Append(points, *myCurrentStyle.color);
 }
 
 
@@ -366,7 +369,7 @@ DGtal::Display3D< Space ,KSpace >::addTriangle(const RealPoint &p1, const RealPo
     const std::array<RealPoint, 3> points = {
       p1, p2, p3
     };
-    myTriangleSetList.Append(points, myCurrentStyle.color);
+    myTriangleSetList.Append(points, *myCurrentStyle.color);
 }
 
 template < typename Space ,typename KSpace>
@@ -377,7 +380,7 @@ DGtal::Display3D< Space ,KSpace >::addPolygon(const std::vector<RealPoint> &vert
     for(unsigned int i=0; i< vertices.size();i++)
         updateBoundingBox(vertices[i]);
 
-    auto& data = myPolygonSetList.Append(vertices, myCurrentStyle.color);
+    auto& data = myPolygonSetList.Append(vertices, *myCurrentStyle.color);
 }
 
 
@@ -499,7 +502,7 @@ DGtal::Display3D< Space ,KSpace >::addPrism(const RealPoint &baseQuadCenter,
   };
   
   for (const auto& pts : points) {
-      myPrismList.Append(pts, myCurrentStyle.color);
+      myPrismList.Append(pts, *myCurrentStyle.color);
   }
 }
 
@@ -1177,7 +1180,7 @@ inline void AddToMesh(
       }
 
       const DGtal::Color color = 
-          hasColor ? data.colors[colorName][i] : data.style.color;
+          hasColor ? data.colors[colorName][i] : data.style->color;
 
       switch(Group::Data::INDEX_SIZE) {
       case 3:
