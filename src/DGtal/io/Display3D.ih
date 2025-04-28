@@ -185,6 +185,14 @@ DGtal::Display3D< Space ,KSpace >::createNewCubeList(std::string str)
 
 template < typename Space ,typename KSpace >
 inline
+void
+DGtal::Display3D< Space ,KSpace >::setDefaultCubeList()
+{
+    return myCubesMap.endGroup();
+}
+
+template < typename Space ,typename KSpace >
+inline
 bool
 DGtal::Display3D< Space ,KSpace >::deleteCubeList(std::string name)
 {
@@ -202,10 +210,26 @@ DGtal::Display3D< Space ,KSpace >::createNewBallList(std::string str)
 
 template < typename Space ,typename KSpace >
 inline
+void
+DGtal::Display3D< Space ,KSpace >::setDefaultBallList()
+{
+    return myBallSetList.endGroup();
+}
+
+template < typename Space ,typename KSpace >
+inline
 std::string
 DGtal::Display3D< Space ,KSpace >::createNewLineList(std::string str)
 {
     return myLineSetList.newGroup(str, myCurrentStyle);
+} 
+
+template < typename Space ,typename KSpace >
+inline
+void
+DGtal::Display3D< Space ,KSpace >::setDefaultLineList()
+{
+    return myLineSetList.endGroup();
 } 
 
 template < typename Space ,typename KSpace >
@@ -216,7 +240,13 @@ DGtal::Display3D< Space ,KSpace >::createNewQuadList(std::string s)
     return myQuadsMap.newGroup(s, myCurrentStyle);
 }
 
-
+template < typename Space ,typename KSpace >
+inline
+void
+DGtal::Display3D< Space ,KSpace >::setDefaultQuadList()
+{
+    return myQuadsMap.endGroup();
+}
 
 template < typename Space ,typename KSpace >
 inline
@@ -225,8 +255,6 @@ DGtal::Display3D< Space ,KSpace >::deleteQuadList(std::string name)
 {
   return myQuadsMap.groups.erase(name);
 }
-
-
 
 template < typename Space ,typename KSpace >
 inline
@@ -238,12 +266,28 @@ DGtal::Display3D< Space ,KSpace >::createNewTriangleList(std::string str)
 
 template < typename Space ,typename KSpace >
 inline
+void
+DGtal::Display3D< Space ,KSpace >::setDefaultTriangleList()
+{
+    return myTriangleSetList.endGroup();
+}
+
+
+template < typename Space ,typename KSpace >
+inline
 std::string
 DGtal::Display3D< Space ,KSpace >::createNewPolygonList(std::string str)
 {
     return myPolygonSetList.newGroup(str, myCurrentStyle);
 }
 
+template < typename Space ,typename KSpace >
+inline
+void
+DGtal::Display3D< Space ,KSpace >::setDefaultPolygonList()
+{
+    return myPolygonSetList.endGroup();
+}
 
 template < typename Space ,typename KSpace >
 inline

@@ -192,8 +192,8 @@ namespace DGtal
         for (const auto& [name, data] : g.groups) {
             const bool split_group = 
                 (name == g.defaultGroupName) 
-                && SINGLETONS_THRESHOLD < data.elementIndices.size()
-                && SEPARATE_DEFAULT_GROUP;
+                && (SINGLETONS_THRESHOLD > data.elementIndices.size())
+                && (SEPARATE_DEFAULT_GROUP);
 
             if (split_group) {
                 // Default group, separate them into individual elements
@@ -210,11 +210,11 @@ namespace DGtal
                     for (size_t j = 0; j < indices[0].size(); j++) indices[0][j] = j;
                     
                     auto* surface = registerGeometry(name + "_" + std::to_string(i), vertices, indices);
-                    applyStyle(surface, data, i, 1);
+                    applyStyle(surface, data, i, 1, true);
                 }
             } else {
                 auto* surface = registerGeometry(name, data.vertices, data.elementIndices);
-                applyStyle(surface, data, 0, data.elementIndices.size());
+                applyStyle(surface, data, 0, data.elementIndices.size(), false);
             }
         }
     }
@@ -233,7 +233,7 @@ namespace DGtal
                 return polyscope::registerHexMesh(name, vertices, indices); 
             }, 
             // Applies the style
-            [](polyscope::VolumeMesh* mesh, const auto& data, size_t i, size_t c) { 
+            [](polyscope::VolumeMesh* mesh, const auto& data, size_t i, size_t c, bool isDefault) { 
                 if (data.style.color.has_value()) {
                     mesh->setColor(glmColor(*data.style.color));
                     mesh->setTransparency(data.style.color->a());
@@ -250,6 +250,8 @@ namespace DGtal
                     mesh->addCellVectorQuantity(name, values);
                 }
                 for (const auto& [name, vals] : data.colorQuantities) {
+                    if (isDefault && name == data.DEFAULT_COLOR_NAME) break;
+
                     std::vector<glm::vec3> colors(c);
                     for (size_t j = 0; j < c; ++j) {
                         colors[j] = glmColor(vals[i + j]);
@@ -269,7 +271,7 @@ namespace DGtal
                 return polyscope::registerSurfaceMesh(name, vertices, indices); 
             }, 
             // Applies the style
-            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c) { 
+            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c, bool isDefault) { 
                 if (data.style.color.has_value()) {
                     surf->setSurfaceColor(glmColor(*data.style.color));
                     surf->setTransparency(data.style.color->a());
@@ -287,6 +289,8 @@ namespace DGtal
                     surf->addFaceVectorQuantity(name, values);
                 }
                 for (const auto& [name, vals] : data.colorQuantities) {
+                    if (isDefault && name == data.DEFAULT_COLOR_NAME) break;
+
                     std::vector<glm::vec3> colors(c);
                     for (size_t j = 0; j < c; ++j) {
                         colors[j] = glmColor(vals[i + j]);
@@ -306,7 +310,7 @@ namespace DGtal
                 return polyscope::registerSurfaceMesh(name, vertices, indices); 
             }, 
             // Applies the style
-            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c) { 
+            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c, bool isDefault) { 
                 if (data.style.color.has_value()) {
                     surf->setSurfaceColor(glmColor(*data.style.color));
                     surf->setTransparency(data.style.color->a());
@@ -324,6 +328,8 @@ namespace DGtal
                     surf->addFaceVectorQuantity(name, values);
                 }
                 for (const auto& [name, vals] : data.colorQuantities) {
+                    if (isDefault && name == data.DEFAULT_COLOR_NAME) break;
+
                     std::vector<glm::vec3> colors(c);
                     for (size_t j = 0; j < c; ++j) {
                         colors[j] = glmColor(vals[i + j]);
@@ -343,7 +349,7 @@ namespace DGtal
                 return polyscope::registerCurveNetwork(name, vertices, indices); 
             }, 
             // Applies the style
-            [](polyscope::CurveNetwork* lines, const auto& data, size_t i, size_t c) { 
+            [](polyscope::CurveNetwork* lines, const auto& data, size_t i, size_t c, bool isDefault) { 
                 if (data.style.color.has_value()) {
                     lines->setColor(glmColor(*data.style.color));
                     lines->setTransparency(data.style.color->a());
@@ -358,6 +364,8 @@ namespace DGtal
                     lines->addEdgeVectorQuantity(name, values);
                 }
                 for (const auto& [name, vals] : data.colorQuantities) {
+                    if (isDefault && name == data.DEFAULT_COLOR_NAME) break;
+
                     std::vector<glm::vec3> colors(c);
                     for (size_t j = 0; j < c; ++j) {
                         colors[j] = glmColor(vals[i + j]);
@@ -377,7 +385,7 @@ namespace DGtal
                 return polyscope::registerPointCloud(name, vertices); 
             }, 
             // Applies the style
-            [](polyscope::PointCloud* points, const auto& data, size_t i, size_t c) { 
+            [](polyscope::PointCloud* points, const auto& data, size_t i, size_t c, bool isDefault) { 
                 if (data.style.color.has_value()) {
                     points->setPointColor(glmColor(*data.style.color));
                     points->setTransparency(data.style.color->a());
@@ -396,6 +404,8 @@ namespace DGtal
                     points->addVectorQuantity(name, values);
                 }
                 for (const auto& [name, vals] : data.colorQuantities) {
+                    if (isDefault && name == data.DEFAULT_COLOR_NAME) break;
+
                     std::vector<glm::vec3> colors(c);
                     for (size_t j = 0; j < c; ++j) {
                         colors[j] = glmColor(vals[i + j]);
@@ -415,7 +425,7 @@ namespace DGtal
                 return polyscope::registerSurfaceMesh(name, vertices, indices); 
             }, 
             // Applies the style
-            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c) { 
+            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c, bool isDefault) { 
                 if (data.style.color.has_value()) {
                     surf->setSurfaceColor(glmColor(*data.style.color));
                     surf->setTransparency(data.style.color->a());
@@ -433,7 +443,9 @@ namespace DGtal
                     surf->addFaceVectorQuantity(name, values);
                 }
                 for (const auto& [name, vals] : data.colorQuantities) {
-                    std::vector<glm::vec3> colors(c);
+                   if (isDefault && name == data.DEFAULT_COLOR_NAME) break;
+
+                   std::vector<glm::vec3> colors(c);
                     for (size_t j = 0; j < c; ++j) {
                         colors[j] = glmColor(vals[i + j]);
                     }
@@ -452,7 +464,7 @@ namespace DGtal
                 return polyscope::registerSurfaceMesh(name, vertices, indices); 
             }, 
             // Applies the style
-            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c) { 
+            [](polyscope::SurfaceMesh* surf, const auto& data, size_t i, size_t c, bool isDefault) { 
                 if (data.style.color.has_value()) {
                     surf->setSurfaceColor(glmColor(*data.style.color));
                     surf->setTransparency(data.style.color->a());
@@ -470,6 +482,8 @@ namespace DGtal
                     surf->addFaceVectorQuantity(name, values);
                 }
                 for (const auto& [name, vals] : data.colorQuantities) {
+                    if (isDefault && name == data.DEFAULT_COLOR_NAME) break;
+
                     std::vector<glm::vec3> colors(c);
                     for (size_t j = 0; j < c; ++j) {
                         colors[j] = glmColor(vals[i + j]);

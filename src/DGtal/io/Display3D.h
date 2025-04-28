@@ -333,7 +333,11 @@ protected:
      * @param s name of the new list
      **/
     std::string createNewLineList(std::string s= "");
-
+ 
+    /**
+     * Used to set the current list to the singletons list
+     */
+    void setDefaultLineList();
 
     /**
      * Used to create a new list containing new 3D objects
@@ -341,8 +345,12 @@ protected:
      * @param s name of the new list
      **/
     std::string createNewBallList(std::string s= "");
-
-
+ 
+    /**
+     * Used to set the current list to the singletons list
+     */
+    void setDefaultBallList();
+    
     /**
      * Used to create a new list containing new 3D objects
      * (useful to use transparency between different objects).
@@ -352,7 +360,11 @@ protected:
      * @return the new key of the map associated to the new list.
      **/
     std::string createNewCubeList(std::string s = "");
-
+    
+    /**
+     * Used to set the current list to the singletons list
+     */
+    void setDefaultCubeList();
     
     /**
      * Delete the cube list identified by a its name.
@@ -371,6 +383,10 @@ protected:
       **/
     std::string createNewQuadList(std::string s = "");
 
+    /**
+     * Used to set the current list to the singletons list
+     */
+    void setDefaultQuadList();
 
     /**
      * Delete the quad list identified by a its name.
@@ -388,12 +404,21 @@ protected:
     std::string createNewTriangleList(std::string s= "");
 
     /**
+     * Used to set the current list to the singletons list
+     */
+    void setDefaultTriangleList();
+
+    /**
      * Used to create a new list containing new 3D objects
      * (useful to use transparency between different objects).
      * @param s name of the new list
      **/
     std::string createNewPolygonList(std::string s= "");
 
+    /**
+     * Used to set the current list to the singletons list
+     */
+    void setDefaultPolygonList();
 
     /**
      * Method to add a specific quad (used by @a addClippingPlane or

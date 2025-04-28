@@ -62,7 +62,6 @@ int main( int argc, char** argv )
 
  Point p1( -1, -1, -2 );
  Point p2( 2, 2, 3 );
- Domain domain( p1, p2 );
  Point p3( 1, 1, 1 );
  Point p4( 2, -1, 3 );
  Point p5( -1, 2, 3 );
@@ -73,11 +72,12 @@ int main( int argc, char** argv )
 
  viewer << p1 << p2 << p3<< p4<< p5 << p6 << p0;
 
+ Domain domain( p1, p2 );
  viewer << SetMode3D(domain.className(), "Grid");
  viewer << domain << MyViewer::updateDisplay;
  
  viewer.show();
  return 0;
 }
-//                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
+//                                                                           //
