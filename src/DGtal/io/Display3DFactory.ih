@@ -1570,6 +1570,7 @@ void DGtal::Display3DFactory<Space,KSpace>::draw( Display & display,
 						  const DGtal::PointVector<dim, TComponent, TContainer> & p )
 {
   display.setDefaultCubeList();
+  display.setDefaultLineList();
 
   DGtal::Color fillColorSave = display.getFillColor();
   std::string mode = display.getMode( p.className() );

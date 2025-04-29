@@ -61,13 +61,18 @@ namespace DGtal {
         // Style
         Style style;
 
+        uint32_t id;
+        std::vector<uint32_t> subIndices;
+
         // Information to draw geometry
         std::vector<Vertex> vertices;
         std::vector<TIndices> elementIndices;
 
-        void Append(std::span<const Vertex> vertices, const Color& col) {
+        void Append(std::span<const Vertex> vertices, const Color& col, uint32_t idx) {
             Append(vertices);
+
             colorQuantities[DEFAULT_COLOR_NAME].push_back(col);
+            subIndices.push_back(idx);
         }
 
         void Append(std::span<const Vertex> v) {
@@ -103,9 +108,9 @@ namespace DGtal {
             isDefault(true)
         { } 
         
-        void Append(std::span<const typename Data::Vertex> data, const Color& col) {
+        void Append(std::span<const typename Data::Vertex> data, const Color& col, uint32_t id) {
             // Append with current color if default group
-            if (isDefault) groups[currentGroup].Append(data, col);
+            if (isDefault) groups[currentGroup].Append(data, col, id);
             else           groups[currentGroup].Append(data);
         }
 
@@ -113,7 +118,7 @@ namespace DGtal {
             return newGroup(defaultGroupName, s);
         }
 
-        std::string newGroup(const std::string& name, const Style& s) { 
+        std::string newGroup(const std::string& name, const Style& s, uint32_t id) { 
             static const std::string TOKEN = "{i}";
             
             std::string newGroup = name;
@@ -137,8 +142,10 @@ namespace DGtal {
             currentGroup = newGroup;
             isDefault = (currentGroup == defaultGroupName); 
 
-            if (!isDefault)
+            if (!isDefault) {
+                groups[currentGroup].id = id;
                 groups[currentGroup].style = s;
+            }
 
             return currentGroup;
         }

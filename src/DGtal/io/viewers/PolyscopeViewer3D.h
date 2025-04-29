@@ -236,6 +236,14 @@ namespace DGtal
          * @see registerImages
          */
         void createPolyscopeObjects() const;
+
+        /** Generic method to reduce code **/
+        template<typename Group, typename Register, typename ApplyStyle>
+        void registerGroup(
+            const Group& g, 
+            Register registerGeometry, 
+            ApplyStyle applyStyle
+        ) const;
         
         /** Register clipping planes */
         void registerClippingPlanes() const;
@@ -256,12 +264,14 @@ namespace DGtal
 
         /** Register images */
         void registerImages() const;
-
+    
     private:
         /// The extension to call upon events
         DGtal::CountedPtr<Extension> extension;
         /// Queue of messages to be displayed
         std::vector<std::string> messageQueue;
+        /// Structure to name mapping to handle clicks
+        mutable std::map<polyscope::Structure*, uint32_t> structureToName;
     };  
 
     template <typename TSpace, typename TKSpace>

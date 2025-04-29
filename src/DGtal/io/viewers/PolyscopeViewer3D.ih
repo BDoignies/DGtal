@@ -14,7 +14,7 @@ namespace DGtal
     // separate elements or batched together
     inline constexpr static bool SEPARATE_DEFAULT_GROUP = true;
     // For performances issues, force group the singletons
-    inline constexpr static size_t SINGLETONS_THRESHOLD = 128;
+    inline constexpr static size_t SINGLETONS_THRESHOLD = 512;
 
     template <typename TSpace, typename TKSpace>
     PolyscopeViewer3D<TSpace, TKSpace>::PolyscopeViewer3D()
@@ -77,23 +77,29 @@ namespace DGtal
             glm::vec3 worldPos = polyscope::view::screenCoordsToWorldPosition(screenCoords);
             std::pair<polyscope::Structure*, size_t> pickPair = 
                 polyscope::pick::pickAtScreenCoords(screenCoords);
-
+            
             // Selection
+            size_t id = 0;
             std::string name = "";
             if (pickPair.first != nullptr)
             {
+                auto it = structureToName.find(pickPair.first);
+                if (it != structureToName.end())
+                    id = it->second;
+
+
                 name = pickPair.first->getName();
                 for (auto& callback : this->mySelectCallBackFcts)
                 {                        
-                    if (callback.fct && callback.isSelected(0))
+                    if (callback.fct && callback.isSelected(id))
                     {
-                        callback.fct(this, 0, callback.data);
+                        callback.fct(this, id, callback.data);
                     }
                 }
             }
 
             if (extension.get())
-                extension->OnSelect(this, pickPair.first, pickPair.second, 0);
+                extension->OnSelect(this, pickPair.first, pickPair.second, id);
         }
     }
     
@@ -183,12 +189,13 @@ namespace DGtal
         this->myClippingPlaneList.push_back(cp);
     }
     
+    template <typename TSpace, typename TKSpace>
     template<typename Group, typename Register, typename ApplyStyle>
-    inline void registerGroup(
+    void PolyscopeViewer3D<TSpace, TKSpace>::registerGroup(
         const Group& g, 
         Register registerGeometry, 
         ApplyStyle applyStyle
-    ) { 
+    ) const { 
         for (const auto& [name, data] : g.groups) {
             const bool split_group = 
                 (name == g.defaultGroupName) 
@@ -198,7 +205,6 @@ namespace DGtal
             if (split_group) {
                 // Default group, separate them into individual elements
                 for (size_t i = 0; i < data.elementIndices.size(); ++i) {
-                    std::cout << i << std::endl;
                     // Assume they are contiguous
                     std::span<const typename decltype(data)::Point> vertices {
                         data.vertices.begin() + data.elementIndices[i][0], 
@@ -210,10 +216,12 @@ namespace DGtal
                     for (size_t j = 0; j < indices[0].size(); j++) indices[0][j] = j;
                     
                     auto* surface = registerGeometry(name + "_" + std::to_string(i), vertices, indices);
+                    structureToName[surface] = data.subIndices[i];
                     applyStyle(surface, data, i, 1, true);
                 }
             } else {
                 auto* surface = registerGeometry(name, data.vertices, data.elementIndices);
+                structureToName[surface] = data.id;
                 applyStyle(surface, data, 0, data.elementIndices.size(), false);
             }
         }
@@ -238,6 +246,12 @@ namespace DGtal
                     mesh->setColor(glmColor(*data.style.color));
                     mesh->setTransparency(data.style.color->a());
                 } 
+
+                if (isDefault) {
+                    DGtal::Color color = data.colorQuantities.at(data.DEFAULT_COLOR_NAME)[i];
+                    mesh->setColor(glmColor(color));
+                    mesh->setTransparency(color.a());
+                }
 
                 for (const auto& [name, vals] : data.scalarQuantities) {
                     std::span<const double> values { vals.data() + i, c };
@@ -279,6 +293,11 @@ namespace DGtal
                 if (data.style.drawBackFace) {
                     surf->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
                 }
+                if (isDefault) {
+                    DGtal::Color color = data.colorQuantities.at(data.DEFAULT_COLOR_NAME)[i];
+                    surf->setSurfaceColor(glmColor(color));
+                    surf->setTransparency(color.a());
+                }
 
                 for (const auto& [name, vals] : data.scalarQuantities) {
                     std::span<const double> values { vals.data() + i, c };
@@ -317,6 +336,11 @@ namespace DGtal
                 }  
                 if (data.style.drawBackFace) {
                     surf->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
+                } 
+                if (isDefault) {
+                    DGtal::Color color = data.colorQuantities.at(data.DEFAULT_COLOR_NAME)[i];
+                    surf->setSurfaceColor(glmColor(color));
+                    surf->setTransparency(color.a());
                 }
 
                 for (const auto& [name, vals] : data.scalarQuantities) {
@@ -355,6 +379,12 @@ namespace DGtal
                     lines->setTransparency(data.style.color->a());
                 } 
 
+                if (isDefault) {
+                    DGtal::Color color = data.colorQuantities.at(data.DEFAULT_COLOR_NAME)[i];
+                    lines->setColor(glmColor(color));
+                    lines->setTransparency(color.a());
+                }
+
                 for (const auto& [name, vals] : data.scalarQuantities) {
                     std::span<const double> values { vals.data() + i, c };
                     lines->addEdgeScalarQuantity(name, values);
@@ -379,6 +409,7 @@ namespace DGtal
     template <typename TSpace, typename TKSpace>
     void PolyscopeViewer3D<TSpace, TKSpace>::registerBalls() const
     {
+        static constexpr double DEFAULT_BALL_RADIUS = 0.1 * 1 / M_PI;
         registerGroup( 
             this->myBallSetList, 
             [](const std::string& name, const auto& vertices, const auto& indices) { 
@@ -389,11 +420,17 @@ namespace DGtal
                 if (data.style.color.has_value()) {
                     points->setPointColor(glmColor(*data.style.color));
                     points->setTransparency(data.style.color->a());
-                } 
+                }  
+                if (isDefault) {
+                    DGtal::Color color = data.colorQuantities.at(data.DEFAULT_COLOR_NAME)[i];
+                    points->setPointColor(glmColor(color));
+                    points->setTransparency(color.a());
+                }
 
                 if (c > data.style.ballToQuadThreshold) {
                     points->setPointRenderMode(polyscope::PointRenderMode::Quad);
                 }
+                points->setPointRadius(DEFAULT_BALL_RADIUS);
 
                 for (const auto& [name, vals] : data.scalarQuantities) {
                     std::span<const double> values { vals.data() + i, c };
@@ -432,6 +469,11 @@ namespace DGtal
                 }
                 if (data.style.drawBackFace) {
                     surf->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
+                }  
+                if (isDefault) {
+                    DGtal::Color color = data.colorQuantities.at(data.DEFAULT_COLOR_NAME)[i];
+                    surf->setSurfaceColor(glmColor(color));
+                    surf->setTransparency(color.a());
                 }
 
                 for (const auto& [name, vals] : data.scalarQuantities) {
@@ -471,6 +513,11 @@ namespace DGtal
                 } 
                 if (data.style.drawBackFace) {
                     surf->setBackFacePolicy(polyscope::BackFacePolicy::Identical);
+                } 
+                if (isDefault) {
+                    DGtal::Color color = data.colorQuantities.at(data.DEFAULT_COLOR_NAME)[i];
+                    surf->setSurfaceColor(glmColor(color));
+                    surf->setTransparency(color.a());
                 }
 
                 for (const auto& [name, vals] : data.scalarQuantities) {
