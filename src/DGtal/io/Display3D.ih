@@ -424,7 +424,7 @@ DGtal::Display3D< Space ,KSpace >::addPolygon(const std::vector<RealPoint> &vert
     for(unsigned int i=0; i< vertices.size();i++)
         updateBoundingBox(vertices[i]);
 
-    auto& data = myPolygonSetList.Append(vertices, *myCurrentStyle.color, name3d());
+    myPolygonSetList.Append(vertices, *myCurrentStyle.color, name3d());
 }
 
 

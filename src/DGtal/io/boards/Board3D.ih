@@ -571,7 +571,6 @@ void DGtal::Board3D<Space, KSpace>::saveOBJ(const std::string & filename, const 
           apoint2 = (point2 - shift)*scale;
           apoint3 = (point3 - shift)*scale;
           
-          
           tmpStream << "v " << apoint1[0]     << " " << apoint1[1]      << " " << apoint1[2] << "\n";
           tmpStream << "v " << apoint2[0]     << " " << apoint2[1]      << " " << apoint2[2] << "\n";
           tmpStream << "v " << apoint3[0]     << " " << apoint3[1]      << " " << apoint3[2] << "\n";
@@ -585,13 +584,12 @@ void DGtal::Board3D<Space, KSpace>::saveOBJ(const std::string & filename, const 
       if (tmpStream.str() != "")
       {
         std::stringstream name;
-        name << Board3D<Space, KSpace>::myTriangleSetNameList.at(k);
+        name << it->first;
         if ( name.str() == "")
         {
           name << "myTriangleSetList_" << k ;
         }
-        typename std::vector< typename Board3D<Space, KSpace>::TriangleD3D>::const_iterator itBegin = it->begin();
-        unsigned int matid = getMaterialIndex(itBegin->color);
+        unsigned int matid = getMaterialIndex(*it->second.style.color);
         std::stringstream matName;
         matName <<  "Mat_" << matid;
         outOBJ << "o  " << name.str() << "\n";
@@ -612,62 +610,72 @@ void DGtal::Board3D<Space, KSpace>::saveOBJ(const std::string & filename, const 
     k=0;
     std::ostringstream tmpStream;
     
-    for (typename std::vector< typename Board3D<Space, KSpace>::QuadD3D>::iterator s_it = Board3D<Space, KSpace>::myPrismList.begin();
-         s_it != Board3D<Space, KSpace>::myPrismList.end();
-         ++s_it)
+    for (auto it = this->myPrismList.groups.begin(); it != this->myPrismList.groups.end(); it++)
     {
       //test if a clipping plane do not cut it
       bool notCut =true;
-      typename std::vector< typename Board3D<Space, KSpace>::ClippingPlaneD3D>::const_iterator itClip = Board3D<Space, KSpace>::myClippingPlaneList.begin();
-      while (itClip !=Board3D<Space, KSpace>::myClippingPlaneList.end() && notCut )
+      const auto& data = it->second.vertices;
+
+      for (size_t i = 0; i < data.size(); i += 4)
       {
-        double a = itClip->a;
-        double b = itClip->b;
-        double c = itClip->c;
-        double d = itClip->d;
-        double d2 = ( a * s_it->point1[0]) + (b * s_it->point1[1]) + ( c * s_it->point1[2] ) + d;
-        notCut = ( d2 >= 0);
-        d2 = ( a * s_it->point2[0]) + (b * s_it->point2[1]) + ( c * s_it->point2[2]) + d;
-        notCut = ( notCut  && ( d2 >= 0) );
-        d2 = ( a * s_it->point3[0]) + (b * s_it->point3[1]) + ( c * s_it->point3[2]) + d;
-        notCut = ( notCut  && ( d2 >= 0) );
-        d2 = ( a * s_it->point4[0]) + (b * s_it->point4[1]) + ( c * s_it->point4[2]) + d;
-        notCut = ( notCut  && ( d2 >= 0) );
-        
-        itClip ++;
+        auto point1 = data[i + 0];
+        auto point2 = data[i + 1];
+        auto point3 = data[i + 2];
+        auto point4 = data[i + 3];
+       
+        auto itClip = this->myClippingPlaneList.begin(); 
+        while (itClip != this->myClippingPlaneList.end() && notCut )
+        {
+          double a = itClip->a;
+          double b = itClip->b;
+          double c = itClip->c;
+          double d = itClip->d;
+          double d2 = ( a * point1[0]) + (b * point1[1]) + ( c * point1[2] ) + d;
+          notCut = ( d2 >= 0);
+          d2 = ( a * point2[0]) + (b * point2[1]) + ( c * point2[2]) + d;
+          notCut = ( notCut  && ( d2 >= 0) );
+          d2 = ( a * point3[0]) + (b * point3[1]) + ( c * point3[2]) + d;
+          notCut = ( notCut  && ( d2 >= 0) );
+          d2 = ( a * point4[0]) + (b * point4[1]) + ( c * point4[2]) + d;
+          notCut = ( notCut  && ( d2 >= 0) );
+          
+          itClip ++;
+        }
+        if (notCut)
+        {
+          apoint1 = (point1 -shift)*scale;
+          apoint2 = (point2 -shift)*scale;
+          apoint3 = (point3 -shift)*scale;
+          apoint4 = (point4 -shift)*scale;
+          
+          tmpStream << "v " << apoint1[0]     << " " << apoint1[1]      << " " << apoint1[2] << "\n";
+          tmpStream << "v " << apoint2[0]     << " " << apoint2[1]      << " " << apoint2[2] << "\n";
+          tmpStream << "v " << apoint3[0]     << " " << apoint3[1]      << " " << apoint3[2] << "\n";
+          tmpStream << "v " << apoint4[0]     << " " << apoint4[1]      << " " << apoint4[2] << "\n";
+          
+//          tmpStream << "vn " << s_it->nx    << " " << s_it->ny     << " " << s_it->nz << "\n";
+          
+          tmpStream << "f " << "-4//-1" << " " << "-3//-1" << " " << "-2//-1"<< " " << "-1//-1" << "\n";
+          
+          j++;
+          
+        }
       }
-      if (notCut)
-      {
-        apoint1 = (s_it->point1 -shift)*scale;
-        apoint2 = (s_it->point2 -shift)*scale;
-        apoint3 = (s_it->point3 -shift)*scale;
-        apoint4 = (s_it->point4 -shift)*scale;
-        
-        tmpStream << "v " << apoint1[0]     << " " << apoint1[1]      << " " << apoint1[2] << "\n";
-        tmpStream << "v " << apoint2[0]     << " " << apoint2[1]      << " " << apoint2[2] << "\n";
-        tmpStream << "v " << apoint3[0]     << " " << apoint3[1]      << " " << apoint3[2] << "\n";
-        tmpStream << "v " << apoint4[0]     << " " << apoint4[1]      << " " << apoint4[2] << "\n";
-        
-        tmpStream << "vn " << s_it->nx    << " " << s_it->ny     << " " << s_it->nz << "\n";
-        
-        tmpStream << "f " << "-4//-1" << " " << "-3//-1" << " " << "-2//-1"<< " " << "-1//-1" << "\n";
-        
-        j++;
-        
-      }
+
       if (tmpStream.str() != "")
       {
         std::stringstream name;
         name << "myPrismList" << j;
         std::stringstream matName;
         matName << "myPrismList" << j << "MAT";
-        typename std::vector< typename Board3D<Space, KSpace>::QuadD3D>::const_iterator itBegin = Board3D<Space, KSpace>::myPrismList.begin();
-        unsigned int matid = getMaterialIndex(itBegin->color);
+        unsigned int matid = getMaterialIndex(*it->second.style.color);
         matName <<  "Mat_" << matid;
         outOBJ << "o  " << name.str() << "\n";
         outOBJ << "usemtl " << matName.str() << "\n";
         outOBJ << tmpStream.str();
       }
+      j++;
+      k++;
     }
     
     
@@ -691,30 +699,10 @@ DGtal::Board3D<Space, KSpace>::init()
   
   myMaterialIndex = 0;
   
-  Board3D<Space, KSpace>::createNewCubeList();
-  Board3D<Space, KSpace>::createNewLineList();
-  Board3D<Space, KSpace>::createNewBallList();
-  
-  Board3D<Space, KSpace>::myCurrentFillColor = DGtal::Color (220, 220, 220);
-  Board3D<Space, KSpace>::myCurrentLineColor = DGtal::Color (22, 22, 222, 50);
-  Board3D<Space, KSpace>::myDefaultColor= DGtal::Color(255, 255, 255);
+  Board3D<Space, KSpace>::myCurrentStyle.color = DGtal::Color (220, 220, 220);
+  // Board3D<Space, KSpace>::myCurrentLineColor = DGtal::Color (22, 22, 222, 50);
+  // Board3D<Space, KSpace>::myDefaultColor= DGtal::Color(255, 255, 255);
   Board3D<Space, KSpace>::myModes["Board3D"]="SolidMode";
-  
-  std::string nameLineSet;
-  Board3D<Space, KSpace>::myLineSetNameList.push_back(nameLineSet);
-  
-  std::string nameBallSet;
-  Board3D<Space, KSpace>::myBallSetNameList.push_back(nameBallSet);
-  
-  
-  std::string nameQuad;
-  Board3D<Space, KSpace>::myQuadSetNameList.push_back(nameQuad);
-  
-  std::string nameTriangle;
-  Board3D<Space, KSpace>::myTriangleSetNameList.push_back(nameTriangle);
-  
-  std::string namePolygon;
-  Board3D<Space, KSpace>::myPolygonSetNameList.push_back(namePolygon);
 }
 ///////////////////////////////////////////////////////////////////////////////
 template < typename Space, typename KSpace>
