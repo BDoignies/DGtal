@@ -30,7 +30,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include "DGtal/base/Common.h"
-#include "DGtal/io/viewers/Viewer3D.h"
+#include "DGtal/io/viewers/PolyscopeViewer3D.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
 #include "DGtal/io/Color.h"
 #include "DGtal/helpers/StdDefs.h"
@@ -51,11 +51,7 @@ using namespace Z3i;
 
 int main( int argc, char** argv )
 {
-
- QApplication application(argc,argv);
- Viewer3D<> viewer;
- viewer.setWindowTitle("simpleViewer");
- viewer.show();
+ PolyscopeViewer3D<> viewer;
 
 
  trace.beginBlock ( "Testing class for  Viewer3D" );
@@ -115,13 +111,10 @@ int main( int argc, char** argv )
   viewer << SetMode3D(domain.className(), "Paving");
   viewer << domain2 << Display3D<Space, KSpace>::updateDisplay;
 
-
- bool res = application.exec();
- trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
+ trace.emphase() << "Passed." << endl;
  trace.endBlock();
- return res ? 0 : 1;
-
-
+ viewer.show();
+ return 1;
 }
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////

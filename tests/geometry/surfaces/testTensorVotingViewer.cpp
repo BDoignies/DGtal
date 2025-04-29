@@ -50,7 +50,7 @@
 #include "DGtal/shapes/implicit/ImplicitBall.h"
 #include "DGtal/shapes/GaussDigitizer.h"
 
-#include "DGtal/io/viewers/Viewer3D.h"
+#include "DGtal/io/viewers/PolyscopeViewer3D.h"
 #include "DGtal/io/colormaps/GradientColorMap.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ using namespace DGtal;
  *
  */
 template<typename Shape>
-bool testLocalEstimatorFromFunctorAdapter(int argc, char **argv)
+bool testLocalEstimatorFromFunctorAdapter()
 {
   unsigned int nbok = 0;
   unsigned int nb = 0;
@@ -130,11 +130,8 @@ bool testLocalEstimatorFromFunctorAdapter(int argc, char **argv)
   double maxval = *std::max_element(values.begin(), values.end());
   double minval = *std::min_element(values.begin(), values.end());
   trace.info() << "Min/max= "<< minval<<"/"<<maxval<<std::endl;
-  QApplication application( argc, argv );
-  typedef Viewer3D<Z3i::Space, Z3i::KSpace> Viewer;
+  typedef PolyscopeViewer3D<Z3i::Space, Z3i::KSpace> Viewer;
   Viewer viewer( K );
-  viewer.setWindowTitle("Features from Tensor Voting");
-  viewer.show();
 
   typedef GradientColorMap< double > Gradient;
   Gradient cmap_grad( minval, maxval );
@@ -155,11 +152,10 @@ bool testLocalEstimatorFromFunctorAdapter(int argc, char **argv)
     }
   
   
-  viewer << Viewer3D<>::updateDisplay;
+  viewer << PolyscopeViewer3D<>::updateDisplay;
   
   trace.endBlock();
-  application.exec();
-
+  viewer.show();
   return true;
 }
 
@@ -174,8 +170,8 @@ int main( int argc, char** argv )
     trace.info() << " " << argv[ i ];
   trace.info() << endl;
 
-  bool res = testLocalEstimatorFromFunctorAdapter<ImplicitHyperCube<Z3i::Space> >(argc,argv)
-    && testLocalEstimatorFromFunctorAdapter<ImplicitBall<Z3i::Space> >(argc,argv);
+  bool res = testLocalEstimatorFromFunctorAdapter<ImplicitHyperCube<Z3i::Space> >()
+    && testLocalEstimatorFromFunctorAdapter<ImplicitBall<Z3i::Space> >();
   
   trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
   trace.endBlock();

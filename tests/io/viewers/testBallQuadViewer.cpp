@@ -33,7 +33,7 @@
 #include "ConfigTest.h"
 #include "DGtal/helpers/StdDefs.h"
 #include "DGtal/topology/ImplicitDigitalSurface.h"
-#include "DGtal/io/viewers/Viewer3D.h"
+#include "DGtal/io/viewers/PolyscopeViewer3D.h"
 ///////////////////////////////////////////////////////////////////////////////
 
 using namespace std;
@@ -65,12 +65,10 @@ struct ImplicitDigitalBall3 {
 };
 
 
-bool testBallQuad(int argc, char **argv)
+bool testBallQuad()
 {
   unsigned int nbok = 0;
   unsigned int nb = 0;
-
-  QApplication application(argc, argv);
 
   trace.beginBlock ( "Testing... Ball with quadnormal");
   using namespace Z3i;
@@ -91,9 +89,7 @@ bool testBallQuad(int argc, char **argv)
                      SurfelAdjacency<KSpace::dimension>( true ), bel );
   unsigned int nbsurfels = 0;
 
-  Viewer3D<Space,KSpace> viewer(K);
-  viewer.setWindowTitle("simpleViewer");
-  viewer.show();
+  PolyscopeViewer3D<Space,KSpace> viewer(K);
 
 
   for ( ConstIterator it = boundary.begin(), it_end = boundary.end();
@@ -109,9 +105,8 @@ bool testBallQuad(int argc, char **argv)
   trace.info() << nbsurfels << " surfels found." << std::endl;
   viewer  << Display3D<Space, KSpace>::updateDisplay;
 
-  bool res = application.exec();
-
-  return res;
+  viewer.show();
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -125,7 +120,7 @@ int main( int argc, char** argv )
     trace.info() << " " << argv[ i ];
   trace.info() << endl;
 
-  bool res = testBallQuad(argc,argv); // && ... other tests
+  bool res = testBallQuad(); // && ... other tests
   trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
   trace.endBlock();
   return res ? 0 : 1;

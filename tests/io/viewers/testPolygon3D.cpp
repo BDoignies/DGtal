@@ -28,7 +28,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include "DGtal/base/Common.h"
-#include "DGtal/io/viewers/Viewer3D.h"
+#include "DGtal/io/viewers/PolyscopeViewer3D.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
 #include "DGtal/io/Color.h"
 #include "DGtal/helpers/StdDefs.h"
@@ -44,11 +44,7 @@ using namespace Z3i;
 
 int main( int argc, char** argv )
 {
-
- QApplication application(argc,argv);
- Viewer3D<> viewer;
- viewer.setWindowTitle("simpleViewer");
- viewer.show();
+ PolyscopeViewer3D<> viewer;
  trace.beginBlock ( "Testing Polygon 3D display in Viewer3D" );
  std::vector<Z3i::RealPoint> polyg1;
 
@@ -68,12 +64,12 @@ int main( int argc, char** argv )
 
  viewer.addPolygon(polyg2);
 
- viewer << Viewer3D<>::updateDisplay;
+ viewer << PolyscopeViewer3D<>::updateDisplay;
+ viewer.show();
 
- bool res = application.exec();
- trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
+ trace.emphase() << "Passed." << endl;
  trace.endBlock();
- return res ? 0 : 1;
+ return 1;
 
 
 }

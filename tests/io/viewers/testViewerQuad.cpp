@@ -22,7 +22,7 @@
  *
  * @date 2011/01/03
  *
- * Functions for testing class Viewer3D.
+ * Functions for testing class PolyscopeViewer3D.
  *
  * This file is part of the DGtal library.
  */
@@ -30,7 +30,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include "DGtal/base/Common.h"
-#include "DGtal/io/viewers/Viewer3D.h"
+#include "DGtal/io/viewers/PolyscopeViewer3D.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
 #include "DGtal/io/Color.h"
 #include "DGtal/helpers/StdDefs.h"
@@ -42,7 +42,7 @@ using namespace DGtal;
 using namespace Z3i;
 
 ///////////////////////////////////////////////////////////////////////////////
-// Functions for testing class Viewer3D.
+// Functions for testing class PolyscopeViewer3D.
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -50,14 +50,10 @@ using namespace Z3i;
 
 int main( int argc, char** argv )
 {
-
- QApplication application(argc,argv);
  KSpace k;
 
  k.init(Point(2,2,2), Point(4,4,4), true);
- Viewer3D<Space,KSpace> viewer(k);
- viewer.setWindowTitle("simpleViewer");
- viewer.show();
+ PolyscopeViewer3D<Space,KSpace> viewer(k);
 
 
  trace.beginBlock ( "Testing class for  Viewer3D" );
@@ -92,16 +88,13 @@ int main( int argc, char** argv )
 
   viewer  << Display3D<Space, KSpace>::updateDisplay;
 
-  bool res = application.exec();
 
 
 
-
-
-
-  trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
+  viewer.show();
+  trace.emphase() << "Passed." << endl;
   trace.endBlock();
-  return res ? 0 : 1;
+  return true;
 }
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////

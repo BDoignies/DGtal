@@ -30,7 +30,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include "DGtal/base/Common.h"
-#include "DGtal/io/viewers/Viewer3D.h"
+#include "DGtal/io/viewers/PolyscopeViewer3D.h"
 #include "DGtal/io/viewers/DrawWithViewer3DModifier.h"
 #include "DGtal/io/Color.h"
 #include "DGtal/helpers/StdDefs.h"
@@ -75,10 +75,7 @@ int main( int argc, char** argv )
   typedef DGtal::ImageContainerBySTLVector< DGtal::Z2i::Domain, unsigned char>  imageNG;
   typedef DGtal::ImageContainerBySTLVector< DGtal::Z2i::Domain, unsigned int>  imageCol;
 
- QApplication application(argc,argv);
- Viewer3D<> viewer;
- viewer.setWindowTitle("simpleViewer");
- viewer.show();
+ PolyscopeViewer3D<> viewer;
  trace.beginBlock("Testing Viewer with 3D Image View ");
 
  Point p1( 0, 0, 0 );
@@ -102,7 +99,7 @@ int main( int argc, char** argv )
 
  viewer << SetMode3D( image.domain().className(), "BoundingBox" );
  viewer << image.domain();
- viewer << DGtal::Update2DDomainPosition<Z3i::Space, Z3i::KSpace>(0, DGtal::xDirection, 0, 0, 0);
+ //TODO viewer << DGtal::Update2DDomainPosition<Z3i::Space, Z3i::KSpace>(0, DGtal::xDirection, 0, 0, 0);
  for(unsigned int i= 0; i< 10; i++){
    if(i%4==0){
      viewer << SetMode3D( image.className(), "" );
@@ -119,12 +116,13 @@ int main( int argc, char** argv )
 
 
  viewer << p1 << p2 << p3;
- viewer << Viewer3D<>::updateDisplay;
+ viewer << PolyscopeViewer3D<>::updateDisplay;
 
 
- bool res = application.exec();
+ bool res = true;
  trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
  trace.endBlock();
+ viewer.show();
  return res ? 0 : 1;
 
 

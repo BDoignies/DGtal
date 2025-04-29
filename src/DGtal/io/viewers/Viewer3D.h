@@ -77,7 +77,10 @@
 
 namespace DGtal
 {
+  template <typename U, typename V>
+  class Viewer3D {};
 
+#if false
   /////////////////////////////////////////////////////////////////////////////
   // class Viewer3D
   /**
@@ -1695,12 +1698,13 @@ namespace DGtal
    */
   std::ostream & operator<<( std::ostream & out,
                              const Viewer3D<TSpace, TKSpace> & object );
+#endif
 } // namespace DGtal
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Includes inline functions.
-#include "DGtal/io/viewers/Viewer3D.ih"
+// #include "DGtal/io/viewers/Viewer3D.ih"
 
 // //
 ///////////////////////////////////////////////////////////////////////////////

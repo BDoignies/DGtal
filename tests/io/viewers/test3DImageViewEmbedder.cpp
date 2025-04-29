@@ -30,7 +30,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include "DGtal/base/Common.h"
-#include "DGtal/io/viewers/Viewer3D.h"
+#include "DGtal/io/viewers/PolyscopeViewer3D.h"
 #include "DGtal/helpers/StdDefs.h"
 #include "DGtal/io/readers/GenericReader.h"
 #include "DGtal/io/writers/GenericWriter.h"
@@ -65,10 +65,7 @@ int main( int argc, char** argv )
   typedef DGtal::ConstImageAdapter<Image3D, Z2i::Domain, DGtal::functors::Point2DEmbedderIn3D<DGtal::Z3i::Domain>,
                                    Image3D::Value,  DGtal::functors::Identity >  ImageAdapterExtractor;
 
- QApplication application(argc,argv);
- Viewer3D<> viewer;
- viewer.setWindowTitle("simpleViewer");
- viewer.show();
+ PolyscopeViewer3D<> viewer;
 
  trace.beginBlock("Testing Viewer with Image Embedder ");
  Point pcenter( 10, 20, 20 );
@@ -130,12 +127,13 @@ int main( int argc, char** argv )
 
 
 
- viewer << Viewer3D<>::updateDisplay;
+ viewer << PolyscopeViewer3D<>::updateDisplay;
 
 
- bool res = application.exec();
+ bool res = true;
  trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
  trace.endBlock();
+ viewer.show();
  return res ? 0 : 1;
 
 }

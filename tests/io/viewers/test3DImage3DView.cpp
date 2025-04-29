@@ -30,7 +30,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include "DGtal/base/Common.h"
-#include "DGtal/io/viewers/Viewer3D.h"
+#include "DGtal/io/viewers/PolyscopeViewer3D.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
 #include "DGtal/io/Color.h"
 #include "DGtal/io/readers/VolReader.h"
@@ -68,10 +68,7 @@ int main( int argc, char** argv )
 {
   typedef DGtal::ImageContainerBySTLVector< DGtal::Z3i::Domain, unsigned char>  Image3D;
 
- QApplication application(argc,argv);
- Viewer3D<> viewer;
- viewer.setWindowTitle("simpleViewer");
- viewer.show();
+ PolyscopeViewer3D<> viewer;
  trace.beginBlock("Testing Viewer with display of 3D Image  ");
 
  Point p1( 0, 0, 0 );
@@ -104,12 +101,13 @@ int main( int argc, char** argv )
   viewer <<  DGtal::UpdateImagePosition<Space, KSpace>(6, DGtal::zDirection, 0.0, 0.0, -10.0);
 
  viewer << p1 << p2 << p3;
- viewer << Viewer3D<>::updateDisplay;
+ viewer << PolyscopeViewer3D<>::updateDisplay;
 
 
- bool res = application.exec();
+ bool res = true;
  trace.emphase() << ( res ? "Passed." : "Error." ) << endl;
  trace.endBlock();
+ viewer.show();
  return res ? 0 : 1;
 
 
