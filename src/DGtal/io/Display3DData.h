@@ -42,6 +42,7 @@ namespace DGtal {
         std::optional<DGtal::Color> color; // Color of the element
         unsigned int ballToQuadThreshold = 4 * 1024; // Threshold to render
                                                      // a quad instead of spheres
+        double width = 1.0;
         bool drawBackFace = true; // If backfaces should be drawn
     };
 
