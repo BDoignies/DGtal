@@ -9,6 +9,8 @@ set(DGTAL_TUTO_EXAMPLES_SRC
   2DSliceImageFromVol
   shortcuts
   shortcuts-geometry
+
+  evalreuse
 )
 
 
