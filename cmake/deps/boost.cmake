@@ -87,8 +87,8 @@ if (NOT ${Boost_FOUND})
         thread
         throw_exception
         tokenizer
-        tti
         tuple
+        tti
         type_index
         type_traits
         typeof
@@ -219,5 +219,17 @@ if (NOT ${Boost_FOUND})
         NAMESPACE Boost::
         FILE BoostTargets.cmake
     )
+else()
+    install(DIRECTORY ${BOOST_INCLUDE_DIRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/DGtal/3rdParties/)
+    install(TARGETS boost_headers ${boost_export_list} EXPORT boost_headers)
+    install(EXPORT boost_headers DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/boost NAMESPACE Boost::)
+
+    # Export target Boost::headers
+    export(TARGETS
+        boost_headers
+        ${boost_export_list}
+        NAMESPACE Boost::
+        FILE BoostTargets.cmake
+ 
 endif()
 
