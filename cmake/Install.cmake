@@ -77,7 +77,7 @@ endforeach()
 
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/DGtalConfigVersion.cmake"
-  VERSION "${VERSION}"
+  VERSION "2.0"
   COMPATIBILITY AnyNewerVersion
 )
 
