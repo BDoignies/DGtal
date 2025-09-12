@@ -218,13 +218,12 @@ export(TARGETS
 if (TARGET boost_headers)
     install(DIRECTORY ${BOOST_INCLUDE_DIRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/DGtal/3rdParties/)
     install(TARGETS boost_headers ${boost_export_list} EXPORT boost_headers)
-    install(EXPORT boost_headers DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/boost NAMESPACE Boost::)
+    install(EXPORT boost_headers DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/boost)
 
 # Export target Boost::headers
     export(TARGETS
         boost_headers
         ${boost_export_list}
-        NAMESPACE Boost::
         FILE BoostTargets.cmake)
 endif()
 
