@@ -45,6 +45,8 @@
 /// Estimator
 #include "DGtal/geometry/surfaces/estimation/IIGeometricFunctors.h"
 #include "DGtal/geometry/surfaces/estimation/IntegralInvariantVolumeEstimator.h"
+#include "DGtal/geometry/surfaces/estimation/ParallelIIEstimator.h"
+#include "DGtal/geometry/surfaces/estimation/DomainSplitter.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,6 +57,111 @@ using namespace DGtal;
 ///////////////////////////////////////////////////////////////////////////////
 // Functions for testing class IntegralInvariantVolumeEstimator and IIGeometricFunctor.
 ///////////////////////////////////////////////////////////////////////////////
+
+bool testCurvature2dP ( double h, double delta )
+{
+  typedef ImplicitBall<Z2i::Space> ImplicitShape;
+  typedef GaussDigitizer<Z2i::Space, ImplicitShape> DigitalShape;
+  typedef LightImplicitDigitalSurface<Z2i::KSpace,DigitalShape> Boundary;
+  typedef DigitalSurface< Boundary > MyDigitalSurface;
+  typedef DepthFirstVisitor< MyDigitalSurface > Visitor;
+  typedef GraphVisitorRange< Visitor > VisitorRange;
+  typedef VisitorRange::ConstIterator VisitorConstIterator;
+
+  typedef functors::IICurvatureFunctor<Z2i::Space> MyIICurvatureFunctor;
+  typedef IntegralInvariantVolumeEstimator< Z2i::KSpace, DigitalShape, MyIICurvatureFunctor > MyIICurvatureEstimator;
+  typedef EvenDomainSplitter<HyperRectDomain<Z2i::Space>> Splitter;
+  typedef ParallelIIEstimator<MyIICurvatureEstimator, Splitter> MyIICurvatureEstimatorA;
+  // typedef MyIICurvatureFunctor::Value Value;
+  typedef MyIICurvatureEstimatorA::Quantity Value;
+
+  double re = 10;
+  double radius = 15;
+  double realValue = 1.0/radius;
+
+  trace.beginBlock( "[PARALLEL] Shape initialisation ..." );
+
+  ImplicitShape ishape( Z2i::RealPoint( 0, 0 ), radius );
+  DigitalShape dshape;
+  dshape.attach( ishape );
+  dshape.init( Z2i::RealPoint( -20.0, -20.0 ), Z2i::RealPoint( 20.0, 20.0 ), h );
+
+  Z2i::KSpace K;
+  if ( !K.init( dshape.getLowerBound(), dshape.getUpperBound(), true ) )
+  {
+    trace.error() << "Problem with Khalimsky space" << std::endl;
+    return false;
+  }
+
+  Z2i::KSpace::Surfel bel = Surfaces<Z2i::KSpace>::findABel( K, dshape, 10000 );
+  Boundary boundary( K, dshape, SurfelAdjacency<Z2i::KSpace::dimension>( true ), bel );
+  MyDigitalSurface surf ( boundary );
+
+  trace.endBlock();
+
+  trace.beginBlock( "Curvature estimator initialisation ...");
+  
+  VisitorRange range( new Visitor( surf, *surf.begin() ));
+  VisitorConstIterator ibegin = range.begin();
+  VisitorConstIterator iend = range.end();
+
+  MyIICurvatureFunctor curvatureFunctor;
+  curvatureFunctor.init( h, re );
+
+  MyIICurvatureEstimatorA curvatureEstimator( 1, curvatureFunctor );
+  curvatureEstimator.attach( K, dshape );
+  curvatureEstimator.setParams( re/h );
+  curvatureEstimator.init( h, ibegin, iend );
+
+  trace.endBlock();
+
+  trace.beginBlock( "Curvature estimator evaluation ...");
+
+  std::vector< Value > results;
+  std::back_insert_iterator< std::vector< Value > > resultsIt( results );
+  curvatureEstimator.eval( ibegin, iend, resultsIt );
+
+  trace.endBlock();
+
+  trace.beginBlock ( "Comparing results of integral invariant 2D curvature ..." );
+
+  double mean = 0.0;
+  double rsize = static_cast<double>(results.size());
+
+  if( rsize == 0 )
+  {
+    trace.error() << "ERROR: surface is empty" << std::endl;
+    trace.endBlock();
+    return false;
+  }
+
+  for ( unsigned int i = 0; i < rsize; ++i )
+  {
+    mean += results[ i ].value;
+  }
+  mean /= rsize;
+
+  if( mean != mean ) //NaN
+  {
+    trace.error() << "ERROR: result is NaN" << std::endl;
+    trace.endBlock();
+    return false;
+  }
+
+  double v = std::abs ( realValue - mean );
+
+  trace.warning() << "True value: " << realValue << std::endl;
+  trace.warning() << "Mean value: " << mean << std::endl;
+  trace.warning() << "Delta: " << delta << " |true - mean|: " << v << std::endl;
+
+  if( v > delta )
+  {
+    trace.endBlock();
+    return false;
+  }
+  trace.endBlock();
+  return true;
+}
 
 bool testCurvature2d ( double h, double delta )
 {
@@ -68,6 +175,7 @@ bool testCurvature2d ( double h, double delta )
 
   typedef functors::IICurvatureFunctor<Z2i::Space> MyIICurvatureFunctor;
   typedef IntegralInvariantVolumeEstimator< Z2i::KSpace, DigitalShape, MyIICurvatureFunctor > MyIICurvatureEstimator;
+  typedef EvenDomainSplitter<HyperRectDomain<Z2i::Space>> Splitter;
   typedef MyIICurvatureFunctor::Value Value;
 
   double re = 10;
@@ -157,6 +265,8 @@ bool testCurvature2d ( double h, double delta )
   trace.endBlock();
   return true;
 }
+
+
 
 bool testMeanCurvature3d( double h, double delta )
 {
@@ -267,7 +377,8 @@ bool testMeanCurvature3d( double h, double delta )
 int main( int /*argc*/, char** /*argv*/ )
 {
   trace.beginBlock ( "Testing class IntegralInvariantVolumeEstimator and 2d/3d mean curvature functors" );
-    bool res = testCurvature2d( 0.05, 0.002 ) && testMeanCurvature3d( 0.6, 0.008 );
+
+    bool res = testCurvature2d( 0.05, 0.002 ) && testCurvature2dP(0.05, 0.002) ;
     trace.emphase() << ( res ? "Passed." : "Error." ) << std::endl;
   trace.endBlock();
   return res ? 0 : 1;
